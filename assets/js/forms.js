@@ -200,7 +200,7 @@
   }
 
   /* ── UTM capture ── */
-  const UTM_KEYS = [ 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content' ];
+  const UTM_KEYS = [ 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid' ];
 
   function captureUtms() {
     const params = new URLSearchParams( window.location.search );

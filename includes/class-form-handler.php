@@ -28,32 +28,21 @@ class AS_Form_Handler {
             : $p['to_city'];
 
         /* Build custom fields */
-        $utm_fields = [];
-        $utm_map = [
-            'UTMContent_custom'  => $p['utm_content'],
-            'UTMCampaign_Custom' => $p['utm_campaign'],
-            'UTMmedium_custom'   => $p['utm_medium'],
-            'utm Keyword'        => $p['utm_term'],
-            'utm Content'        => $p['utm_content'],
-            'utm Campaign'       => $p['utm_campaign'],
-        ];
-        foreach ( $utm_map as $field_id => $value ) {
-            if ( $value !== '' ) {
-                $utm_fields[] = [ 'id' => sanitize_text_field( $field_id ), 'value' => sanitize_text_field( $value ) ];
-            }
-        }
-
-        $custom_fields = array_merge(
-            AS_GHL_API::build_custom_fields( [
-                'as_cf_move_type'      => $p['move_type'],
-                'as_cf_pickup_date'    => $p['pickup_date'],
-                'as_cf_from_city'      => $from,
-                'as_cf_to_city'        => $to,
-                'as_cf_vehicle_type'   => $p['vehicle_type'],
-                'as_cf_vehicle_status' => $p['vehicle_status'],
-            ] ),
-            $utm_fields
-        );
+        $custom_fields = AS_GHL_API::build_custom_fields( [
+            'as_cf_move_type'         => $p['move_type'],
+            'as_cf_pickup_date'       => $p['pickup_date'],
+            'as_cf_from_city'         => $from,
+            'as_cf_to_city'           => $to,
+            'as_cf_vehicle_type'      => $p['vehicle_type'],
+            'as_cf_vehicle_status'    => $p['vehicle_status'],
+            'as_cf_utm_medium'        => $p['utm_medium'],
+            'as_cf_utm_campaign'      => $p['utm_campaign'],
+            'as_cf_utm_content'       => $p['utm_content'],
+            'as_cf_utm_keyword'       => $p['utm_term'],
+            'as_cf_utm_content_std'   => $p['utm_content'],
+            'as_cf_utm_campaign_std'  => $p['utm_campaign'],
+            'as_cf_gclid'             => $p['gclid'],
+        ] );
 
         $payload = [
             'firstName'   => $p['first_name'],
@@ -142,7 +131,7 @@ class AS_Form_Handler {
             'move_type', 'pickup_date', 'from_city', 'from_other',
             'to_city', 'to_other', 'vehicle_type', 'vehicle_status',
             'first_name', 'last_name', 'email', 'phone',
-            'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
+            'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid',
         ];
         $out = [];
         foreach ( $keys as $k ) {

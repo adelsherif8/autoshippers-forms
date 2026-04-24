@@ -11,8 +11,9 @@ function as_save_settings(): void {
         'as_ghl_api_key', 'as_ghl_location_id',
         'as_cf_move_type', 'as_cf_pickup_date', 'as_cf_from_city',
         'as_cf_to_city',   'as_cf_vehicle_type', 'as_cf_vehicle_status',
-        'as_cf_utm_source', 'as_cf_utm_medium', 'as_cf_utm_campaign',
-        'as_cf_utm_term',   'as_cf_utm_content',
+        'as_cf_utm_medium', 'as_cf_utm_campaign', 'as_cf_utm_content',
+        'as_cf_utm_keyword', 'as_cf_utm_content_std', 'as_cf_utm_campaign_std',
+        'as_cf_gclid',
     ];
 
     foreach ( $text_options as $opt ) {
@@ -147,17 +148,19 @@ function as_render_settings_page(): void {
                             <?php endforeach; ?>
                         </tbody>
                     </table>
-                    <h3 style="margin-top:20px">UTM Tracking</h3>
+                    <h3 style="margin-top:20px">UTM &amp; GCLID Tracking</h3>
                     <table class="as-cf-table widefat">
-                        <thead><tr><th style="width:220px">UTM Parameter</th><th>GHL Custom Field ID</th></tr></thead>
+                        <thead><tr><th style="width:220px">GHL Field Name</th><th>GHL Custom Field ID</th></tr></thead>
                         <tbody>
                             <?php
                             $utm_fields = [
-                                'as_cf_utm_source'   => 'UTM Source',
-                                'as_cf_utm_medium'   => 'UTM Medium',
-                                'as_cf_utm_campaign' => 'UTM Campaign',
-                                'as_cf_utm_term'     => 'UTM Term',
-                                'as_cf_utm_content'  => 'UTM Content',
+                                'as_cf_utm_medium'        => 'UTMmedium_custom',
+                                'as_cf_utm_campaign'      => 'UTMCampaign_Custom',
+                                'as_cf_utm_content'       => 'UTMContent_custom',
+                                'as_cf_utm_keyword'       => 'utm Keyword',
+                                'as_cf_utm_content_std'   => 'utm Content',
+                                'as_cf_utm_campaign_std'  => 'utm Campaign',
+                                'as_cf_gclid'             => 'GCLID',
                             ];
                             foreach ( $utm_fields as $opt => $label ) : ?>
                             <tr>
