@@ -93,6 +93,11 @@ function as_render_settings_page(): void {
                         See the <a href="<?php echo admin_url( 'admin.php?page=as-instructions' ); ?>">Instructions page</a> for how to find these IDs.
                     </p>
 
+                    <div class="as-test-box" style="margin-bottom:18px">
+                        <button type="button" id="as-fetch-fields-btn">Fetch Fields from GHL</button>
+                        <div id="as-fields-result" class="as-test-result" style="margin-top:10px"></div>
+                    </div>
+
                     <h3>Shipping Details</h3>
                     <table class="as-cf-table widefat">
                         <thead><tr><th style="width:220px">Field</th><th>GHL Custom Field ID</th></tr></thead>

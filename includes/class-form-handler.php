@@ -7,6 +7,7 @@ class AS_Form_Handler {
         add_action( 'wp_ajax_as_submit',           [ $this, 'handle_submit' ] );
         add_action( 'wp_ajax_nopriv_as_submit',    [ $this, 'handle_submit' ] );
         add_action( 'wp_ajax_as_test_connection',  [ $this, 'handle_test_connection' ] );
+        add_action( 'wp_ajax_as_fetch_fields',     [ $this, 'handle_fetch_fields' ] );
     }
 
     /* ── Form submission ──────────────────────────────────────── */
@@ -75,6 +76,46 @@ class AS_Form_Handler {
         } else {
             wp_send_json_error( [ 'message' => $result['message'] ] );
         }
+    }
+
+    /* ── Fetch GHL custom fields ─────────────────────────────── */
+    public function handle_fetch_fields(): void {
+        if ( ! check_ajax_referer( 'as_admin', 'nonce', false ) || ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Unauthorized.' ], 403 );
+        }
+
+        $api_key     = sanitize_text_field( $_POST['api_key']     ?? '' );
+        $location_id = sanitize_text_field( $_POST['location_id'] ?? '' );
+
+        $response = wp_remote_get(
+            'https://services.leadconnectorhq.com/locations/' . rawurlencode( $location_id ) . '/customFields',
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $api_key,
+                    'Version'       => '2021-07-28',
+                ],
+                'timeout' => 15,
+            ]
+        );
+
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error( [ 'message' => $response->get_error_message() ] );
+        }
+
+        $code   = wp_remote_retrieve_response_code( $response );
+        $body   = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        if ( $code !== 200 ) {
+            wp_send_json_error( [ 'message' => $body['message'] ?? "HTTP $code" ] );
+        }
+
+        $fields = array_map( fn( $f ) => [
+            'name' => $f['name'] ?? '',
+            'key'  => $f['fieldKey'] ?? '',
+            'id'   => $f['id']       ?? '',
+        ], $body['customFields'] ?? [] );
+
+        wp_send_json_success( [ 'fields' => $fields ] );
     }
 
     /* ── Helpers ─────────────────────────────────────────────── */
