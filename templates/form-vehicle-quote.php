@@ -6,6 +6,13 @@ $cities = [
   'Moncton','Halifax','Saint John NB','Montreal',"St. John's NFL",'Other',
 ];
 ?>
+<!-- Hero banner -->
+<div class="as-hero">
+  <div class="as-hero-eyebrow">FREE QUOTE</div>
+  <h2 class="as-hero-title">Reserve within 24hrs &amp; save $100 more</h2>
+  <p class="as-hero-sub">Get your instant quote online and save an extra $100 if you reserve online. Cancel for free at any time before your car is loaded</p>
+</div>
+
 <div class="as-wrapper" id="<?php echo esc_attr( $uid ); ?>" data-total="3">
 
   <!-- Logo -->
@@ -236,4 +243,23 @@ $cities = [
     </div>
 
   </div><!-- /.as-card -->
+<!-- Contact strip -->
+<div class="as-contact-strip">
+  <div class="as-contact-item">
+    <div class="as-contact-icon"><i class="fa-solid fa-phone-volume"></i></div>
+    <div class="as-contact-label">Phone</div>
+    <div class="as-contact-value">(647) 370-6268</div>
+  </div>
+  <div class="as-contact-item">
+    <div class="as-contact-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+    <div class="as-contact-label">Email</div>
+    <div class="as-contact-value">dispatch@autoshippers.ca</div>
+  </div>
+  <div class="as-contact-item">
+    <div class="as-contact-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+    <div class="as-contact-label">Address</div>
+    <div class="as-contact-value">482 South Service Road Unit #134</div>
+  </div>
+</div>
+
 </div><!-- /.as-wrapper -->
