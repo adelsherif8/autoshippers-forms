@@ -3,7 +3,8 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 
 class AS_GHL_API {
 
-    const BASE = 'https://rest.gohighlevel.com/v1/';
+    const BASE    = 'https://services.leadconnectorhq.com/';
+    const VERSION = '2021-07-28';
 
     private string $api_key;
     private string $location_id;
@@ -40,7 +41,7 @@ class AS_GHL_API {
         $payload['locationId'] = $this->location_id;
 
         $response = wp_remote_post(
-            self::BASE . 'contacts/',
+            self::BASE . 'contacts/upsert',
             [
                 'headers' => array_merge( $this->headers(), [ 'Content-Type' => 'application/json' ] ),
                 'body'    => wp_json_encode( $payload ),
@@ -63,7 +64,7 @@ class AS_GHL_API {
         return [ 'success' => false, 'message' => $msg ];
     }
 
-    /* Build the customField array from saved option IDs and submitted values */
+    /* Build the customFields array from saved option IDs and submitted values */
     public static function build_custom_fields( array $map ): array {
         $fields = [];
         foreach ( $map as $option_key => $value ) {
@@ -76,6 +77,9 @@ class AS_GHL_API {
     }
 
     private function headers(): array {
-        return [ 'Authorization' => 'Bearer ' . $this->api_key ];
+        return [
+            'Authorization' => 'Bearer ' . $this->api_key,
+            'Version'       => self::VERSION,
+        ];
     }
 }
