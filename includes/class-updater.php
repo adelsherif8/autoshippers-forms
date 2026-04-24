@@ -19,16 +19,36 @@ class AS_Updater {
     add_filter( 'pre_set_site_transient_update_plugins', [ $this, 'check_update' ] );
     add_filter( 'plugins_api',                           [ $this, 'plugin_info'  ], 20, 3 );
     add_action( 'admin_init',                            [ $this, 'inject_update' ] );
-    add_filter( 'http_request_args',                     [ $this, 'allow_redirect' ], 10, 2 );
+    add_filter( 'upgrader_pre_download',                 [ $this, 'pre_download'  ], 10, 3 );
   }
 
-  /* ── Allow WordPress to follow GitHub's redirect when downloading zip ── */
-  public function allow_redirect( $args, $url ) {
-    if ( strpos( $url, 'github.com/adelsherif8/autoshippers-forms/releases/download' ) !== false ) {
-      $args['redirection'] = 10;
-      $args['sslverify']   = false;
+  /* ── Take over the download so we control redirect/SSL handling ── */
+  public function pre_download( $reply, $package, $upgrader ) {
+    if ( ! is_string( $package ) || strpos( $package, 'github.com/' . $this->repo . '/releases/download' ) === false ) {
+      return $reply;
     }
-    return $args;
+
+    $tmpfname = wp_tempnam( $package );
+
+    $response = wp_remote_get( $package, [
+      'timeout'     => 300,
+      'redirection' => 10,
+      'stream'      => true,
+      'filename'    => $tmpfname,
+    ] );
+
+    if ( is_wp_error( $response ) ) {
+      @unlink( $tmpfname );
+      return $response;
+    }
+
+    $code = wp_remote_retrieve_response_code( $response );
+    if ( 200 !== (int) $code ) {
+      @unlink( $tmpfname );
+      return new \WP_Error( 'as_download_failed', 'AutoShippers updater: download failed. HTTP ' . $code );
+    }
+
+    return $tmpfname;
   }
 
   /* ── Directly inject update into WP transient on plugins/updates screen ── */
