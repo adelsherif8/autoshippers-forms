@@ -3,7 +3,7 @@
  * Plugin Name:  AutoShippers Forms
  * Plugin URI:   https://autoshippers.ca
  * Description:  Multi-step Vehicle Shipping Quote form with GoHighLevel CRM integration.
- * Version:      1.0.1
+ * Version:      1.0.2
  * Author:       AutoShippers
  * License:      GPL-2.0+
  * Text Domain:  autoshippers-forms
