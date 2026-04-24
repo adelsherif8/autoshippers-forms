@@ -14,6 +14,7 @@ jobs:
 
       - name: Build zip
         run: |
+          mkdir -p /tmp/build/autoshippers-forms
           rsync -av --exclude='.git' --exclude='.github' --exclude='release.sh' \
             ./ /tmp/build/autoshippers-forms/
           cd /tmp/build
