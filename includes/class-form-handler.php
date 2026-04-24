@@ -45,7 +45,7 @@ class AS_Form_Handler {
         ];
 
         if ( ! empty( $custom_fields ) ) {
-            $payload['customField'] = $custom_fields;
+            $payload['customFields'] = $custom_fields;
         }
 
         $api    = new AS_GHL_API();
