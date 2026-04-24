@@ -160,11 +160,7 @@ class AS_Updater {
   }
 
   private function get_zip_url( $release ) {
-    if ( ! empty( $release->assets ) ) {
-      foreach ( $release->assets as $asset ) {
-        if ( str_ends_with( $asset->name, '.zip' ) ) return $asset->browser_download_url;
-      }
-    }
-    return null;
+    // Use raw.githubusercontent.com (dist branch) — avoids GitHub's CDN redirect
+    return "https://raw.githubusercontent.com/{$this->repo}/dist/autoshippers-forms.zip";
   }
 }

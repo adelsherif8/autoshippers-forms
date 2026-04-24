@@ -11,6 +11,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Build zip
         run: |
@@ -19,6 +21,17 @@ jobs:
             ./ /tmp/build/autoshippers-forms/
           cd /tmp/build
           zip -r autoshippers-forms.zip autoshippers-forms/
+
+      - name: Push zip to dist branch
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git checkout --orphan dist-tmp
+          git rm -rf . --quiet
+          cp /tmp/build/autoshippers-forms.zip ./autoshippers-forms.zip
+          git add autoshippers-forms.zip
+          git commit -m "dist: ${{ github.ref_name }}"
+          git push origin HEAD:dist --force
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
