@@ -70,7 +70,7 @@ class AS_GHL_API {
         foreach ( $map as $option_key => $value ) {
             $id = (string) get_option( $option_key, '' );
             if ( $id !== '' && $value !== '' && $value !== null ) {
-                $fields[] = [ 'id' => $id, 'field_value' => (string) $value ];
+                $fields[] = [ 'id' => $id, 'value' => (string) $value ];
             }
         }
         return $fields;
