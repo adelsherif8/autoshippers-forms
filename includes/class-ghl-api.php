@@ -40,7 +40,7 @@ class AS_GHL_API {
         $payload['locationId'] = $this->location_id;
 
         $response = wp_remote_post(
-            self::BASE . 'contacts/upsert',
+            self::BASE . 'contacts/',
             [
                 'headers' => array_merge( $this->headers(), [ 'Content-Type' => 'application/json' ] ),
                 'body'    => wp_json_encode( $payload ),
