@@ -19,6 +19,16 @@ class AS_Updater {
     add_filter( 'pre_set_site_transient_update_plugins', [ $this, 'check_update' ] );
     add_filter( 'plugins_api',                           [ $this, 'plugin_info'  ], 20, 3 );
     add_action( 'admin_init',                            [ $this, 'inject_update' ] );
+    add_filter( 'http_request_args',                     [ $this, 'allow_redirect' ], 10, 2 );
+  }
+
+  /* ── Allow WordPress to follow GitHub's redirect when downloading zip ── */
+  public function allow_redirect( $args, $url ) {
+    if ( strpos( $url, 'github.com/adelsherif8/autoshippers-forms/releases/download' ) !== false ) {
+      $args['redirection'] = 10;
+      $args['sslverify']   = false;
+    }
+    return $args;
   }
 
   /* ── Directly inject update into WP transient on plugins/updates screen ── */
