@@ -293,15 +293,16 @@
   background-position: right 14px center;
   padding-right: 36px;
 }
-/* Restore native date controls so browser doesn't render two calendar icons */
-input[type="date"].as-input {
-  -webkit-appearance: auto;
-  appearance: auto;
+/* Override theme rule that injects a second calendar SVG */
+.as-wrapper input[type="date"] {
+  background-image: none !important;
 }
 input[type="date"].as-input::-webkit-calendar-picker-indicator {
   cursor: pointer;
   opacity: 0.55;
 }
+
+.as-select { height: 45px; }
 
 .as-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
