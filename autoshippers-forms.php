@@ -3,7 +3,7 @@
  * Plugin Name:  AutoShippers Forms
  * Plugin URI:   https://autoshippers.ca
  * Description:  Multi-step Vehicle Shipping Quote form with GoHighLevel CRM integration.
- * Version:      1.0.0
+ * Version:      1.0.1
  * Author:       AutoShippers
  * License:      GPL-2.0+
  * Text Domain:  autoshippers-forms
@@ -11,14 +11,18 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'AS_VERSION',  '1.0.0' );
-define( 'AS_DIR',      plugin_dir_path( __FILE__ ) );
-define( 'AS_URL',      plugin_dir_url( __FILE__ ) );
-define( 'AS_BASENAME', plugin_basename( __FILE__ ) );
+define( 'AS_VERSION',     '1.0.1' );
+define( 'AS_DIR',         plugin_dir_path( __FILE__ ) );
+define( 'AS_URL',         plugin_dir_url( __FILE__ ) );
+define( 'AS_BASENAME',    plugin_basename( __FILE__ ) );
+define( 'AS_GITHUB_REPO', 'adelsherif8/autoshippers-forms' );
 
 /* ── Includes ──────────────────────────────────────────────── */
+require_once AS_DIR . 'includes/class-updater.php';
 require_once AS_DIR . 'includes/class-ghl-api.php';
 require_once AS_DIR . 'includes/class-form-handler.php';
+
+new AS_Updater( AS_GITHUB_REPO, __FILE__, AS_VERSION );
 require_once AS_DIR . 'admin/admin-page.php';
 require_once AS_DIR . 'admin/instructions-page.php';
 
