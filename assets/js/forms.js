@@ -154,6 +154,8 @@
         }
       } );
 
+      appendUtms( data );
+
       fetch( asData.ajaxUrl, { method: 'POST', body: data } )
         .then( r => r.json() )
         .then( res => {
@@ -197,7 +199,26 @@
     }
   }
 
+  /* ── UTM capture ── */
+  const UTM_KEYS = [ 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content' ];
+
+  function captureUtms() {
+    const params = new URLSearchParams( window.location.search );
+    UTM_KEYS.forEach( k => {
+      const v = params.get( k );
+      if ( v ) sessionStorage.setItem( 'as_' + k, v );
+    } );
+  }
+
+  function appendUtms( data ) {
+    UTM_KEYS.forEach( k => {
+      const v = sessionStorage.getItem( 'as_' + k );
+      if ( v ) data.append( k, v );
+    } );
+  }
+
   document.addEventListener( 'DOMContentLoaded', () => {
+    captureUtms();
     document.querySelectorAll( '.as-wrapper[data-total]' ).forEach( wrap => new AsForm( wrap ) );
   } );
 

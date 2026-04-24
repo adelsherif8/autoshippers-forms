@@ -35,6 +35,11 @@ class AS_Form_Handler {
             'as_cf_to_city'        => $to,
             'as_cf_vehicle_type'   => $p['vehicle_type'],
             'as_cf_vehicle_status' => $p['vehicle_status'],
+            'as_cf_utm_source'     => $p['utm_source'],
+            'as_cf_utm_medium'     => $p['utm_medium'],
+            'as_cf_utm_campaign'   => $p['utm_campaign'],
+            'as_cf_utm_term'       => $p['utm_term'],
+            'as_cf_utm_content'    => $p['utm_content'],
         ] );
 
         $payload = [
@@ -124,6 +129,7 @@ class AS_Form_Handler {
             'move_type', 'pickup_date', 'from_city', 'from_other',
             'to_city', 'to_other', 'vehicle_type', 'vehicle_status',
             'first_name', 'last_name', 'email', 'phone',
+            'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content',
         ];
         $out = [];
         foreach ( $keys as $k ) {
