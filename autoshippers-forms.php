@@ -11,7 +11,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'AS_VERSION',     '1.0.1' );
+define( 'AS_VERSION',  '1.0.2' );
 define( 'AS_DIR',         plugin_dir_path( __FILE__ ) );
 define( 'AS_URL',         plugin_dir_url( __FILE__ ) );
 define( 'AS_BASENAME',    plugin_basename( __FILE__ ) );

@@ -236,13 +236,19 @@
 
 /* ── Route row ────────────────────────────────────────────── */
 .as-route-row {
-  display: grid;
-  grid-template-columns: 1fr 40px 1fr;
-  align-items: end;
-  gap: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
   margin-bottom: 16px;
 }
+.as-route-row > .as-field {
+  flex: 1 1 140px;
+  min-width: 0;
+  margin-bottom: 0;
+}
 .as-route-arrow {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -287,7 +293,15 @@
   background-position: right 14px center;
   padding-right: 36px;
 }
-input[type="date"].as-input::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .5; }
+/* Restore native date controls so browser doesn't render two calendar icons */
+input[type="date"].as-input {
+  -webkit-appearance: auto;
+  appearance: auto;
+}
+input[type="date"].as-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.55;
+}
 
 .as-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
@@ -501,8 +515,8 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator { cursor: pointer
     flex-shrink: 0;
   }
 
-  /* Route: stack From / To vertically */
-  .as-route-row { grid-template-columns: 1fr; gap: 10px; }
+  /* Route: stack From / To vertically on small screens */
+  .as-route-row > .as-field { flex: 1 1 100%; }
   .as-route-arrow { display: none; }
 
   /* City selects: fix height being clipped on iOS */

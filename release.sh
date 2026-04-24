@@ -10,7 +10,7 @@ fi
 MAIN_FILE="autoshippers-forms.php"
 
 sed -i '' "s/Version:      .*/Version:      $VERSION/" "$MAIN_FILE"
-sed -i '' "s/define( 'AS_VERSION',  '.*' )/define( 'AS_VERSION',  '$VERSION' )/" "$MAIN_FILE"
+sed -i '' "s/define( 'AS_VERSION', *'[^']*' )/define( 'AS_VERSION',  '$VERSION' )/" "$MAIN_FILE"
 
 echo "✓ Bumped version to $VERSION"
 
