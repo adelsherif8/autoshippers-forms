@@ -1,6 +1,6 @@
 {
   "name": "autoshippers-forms",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "private": true,
   "scripts": {
     "version": "sed -i '' \"s/Version:      .*/Version:      $npm_new_version/\" autoshippers-forms.php && sed -i '' \"s/define( 'AS_VERSION', *'[^']*' )/define( 'AS_VERSION',  '$npm_new_version' )/\" autoshippers-forms.php && git add autoshippers-forms.php",
