@@ -379,18 +379,16 @@
   background-position: right 14px center;
   padding-right: 36px;
 }
-/* Date input: show a subtle calendar icon; hide the theme's injected duplicate */
+/* Date input: restore native appearance so iOS shows the date format hint */
 .as-wrapper input[type="date"].as-input {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' viewBox='0 0 24 24'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' stroke='%239ca3af' stroke-width='1.5'/%3E%3Cpath d='M3 9h18M8 2v4M16 2v4' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") !important;
-  background-repeat: no-repeat !important;
-  background-position: right 14px center !important;
-  padding-right: 40px !important;
+  -webkit-appearance: auto;
+  appearance: auto;
+  background-image: none !important;
+  padding-right: 14px !important;
 }
 input[type="date"].as-input::-webkit-calendar-picker-indicator {
-  opacity: 0; /* hide native icon so our SVG shows instead */
   cursor: pointer;
-  position: absolute;
-  right: 0; width: 40px; height: 100%;
+  opacity: 0.5;
 }
 
 .as-select { height: 45px; }
