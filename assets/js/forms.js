@@ -150,7 +150,8 @@
         if ( el.type === 'radio' || el.type === 'checkbox' ) {
           if ( el.checked ) data.set( el.name, el.value );
         } else {
-          data.set( el.name, el.value );
+          // date inputs store ISO value in dataset.dateVal; display text is in .value
+          data.set( el.name, el.dataset.dateVal ?? el.value );
         }
       } );
 
@@ -218,19 +219,39 @@
   }
 
   /* ── iOS date input fix ──
-     Real iOS Safari shows a blank box for type="date" when empty.
-     Swap to type="text" + placeholder until focus, then back to date. */
+     Real iOS Safari shows a blank / oversized box for type="date".
+     Keep it as type="text" always; swap to date only while the picker
+     is open, then restore text with a readable display value. */
   function fixDateInputs() {
     document.querySelectorAll( 'input[type="date"].as-input' ).forEach( inp => {
-      function toText() {
-        if ( ! inp.value ) {
-          inp.type        = 'text';
+      inp.type = 'text';
+
+      function showDisplay() {
+        const raw = inp.dataset.dateVal || '';
+        if ( raw ) {
+          const d = new Date( raw + 'T12:00:00' );
+          inp.value = d.toLocaleDateString( 'en-US', { month: 'short', day: 'numeric', year: 'numeric' } );
+        } else {
+          inp.value       = '';
           inp.placeholder = 'Optional — tap to select';
         }
       }
-      toText();
-      inp.addEventListener( 'focus', () => { inp.type = 'date'; } );
-      inp.addEventListener( 'blur',  toText );
+
+      showDisplay();
+
+      inp.addEventListener( 'focus', () => {
+        inp.type  = 'date';
+        inp.value = inp.dataset.dateVal || '';
+      } );
+
+      inp.addEventListener( 'change', () => {
+        inp.dataset.dateVal = inp.value; // store real ISO value
+      } );
+
+      inp.addEventListener( 'blur', () => {
+        showDisplay();
+        inp.type = 'text'; // switch back so it stays constrained
+      } );
     } );
   }
 
