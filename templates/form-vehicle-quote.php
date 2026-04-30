@@ -29,9 +29,9 @@ $cities = [
 
     <!-- Step tabs -->
     <div class="as-step-tabs">
-      <div class="as-tab active" data-tab="1"><div class="as-tab-num">1</div> Shipping Details</div>
-      <div class="as-tab" data-tab="2"><div class="as-tab-num">2</div> Vehicle Details</div>
-      <div class="as-tab" data-tab="3"><div class="as-tab-num">3</div> Get Quote</div>
+      <div class="as-tab active" data-tab="1"><div class="as-tab-num">1</div> <span class="as-tab-label">Shipping Details</span></div>
+      <div class="as-tab" data-tab="2"><div class="as-tab-num">2</div> <span class="as-tab-label">Vehicle Details</span></div>
+      <div class="as-tab" data-tab="3"><div class="as-tab-num">3</div> <span class="as-tab-label">Get Quote</span></div>
     </div>
 
     <div class="as-body">
