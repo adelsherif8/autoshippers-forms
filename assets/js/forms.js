@@ -217,8 +217,26 @@
     } );
   }
 
+  /* ── iOS date input fix ──
+     Real iOS Safari shows a blank box for type="date" when empty.
+     Swap to type="text" + placeholder until focus, then back to date. */
+  function fixDateInputs() {
+    document.querySelectorAll( 'input[type="date"].as-input' ).forEach( inp => {
+      function toText() {
+        if ( ! inp.value ) {
+          inp.type        = 'text';
+          inp.placeholder = 'Optional — tap to select';
+        }
+      }
+      toText();
+      inp.addEventListener( 'focus', () => { inp.type = 'date'; } );
+      inp.addEventListener( 'blur',  toText );
+    } );
+  }
+
   document.addEventListener( 'DOMContentLoaded', () => {
     captureUtms();
+    fixDateInputs();
     document.querySelectorAll( '.as-wrapper[data-total]' ).forEach( wrap => new AsForm( wrap ) );
   } );
 
