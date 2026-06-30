@@ -12,7 +12,7 @@ function as_save_settings(): void {
         'as_cf_move_type', 'as_cf_pickup_date', 'as_cf_from_city',
         'as_cf_to_city',   'as_cf_vehicle_type', 'as_cf_vehicle_status',
         'as_cf_utm_medium', 'as_cf_utm_campaign', 'as_cf_utm_content',
-        'as_cf_utm_keyword', 'as_cf_utm_content_std', 'as_cf_utm_campaign_std',
+        'as_cf_utm_keyword', 'as_cf_utm_term',
         'as_cf_gclid',
         'as_utm_folder_id',
     ];
@@ -157,15 +157,12 @@ function as_render_settings_page(): void {
                         <div style="flex:1;min-width:280px">
                             <strong>Auto-create UTM fields in GHL</strong>
                             <div style="font-size:12px;color:#555;margin-top:4px">
-                                Paste the parent folder UUID below (e.g. "UTM forms" folder) and click the button. The plugin will create any missing UTM custom fields directly in your GHL location and auto-fill the IDs.
+                                One-click setup. The plugin will find your existing "UTM forms" folder in GHL (or create one if it doesn't exist yet), create every missing UTM custom field inside it, and auto-fill the IDs in the table below.
                             </div>
                             <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
-                                <input type="text" id="as-utm-folder-id"
-                                       value="<?php echo esc_attr( get_option( 'as_utm_folder_id', '' ) ); ?>"
-                                       placeholder="UTM folder UUID (e.g. qQnV7NMUJ5QujwklRTF1)"
-                                       style="flex:1;min-width:260px">
-                                <button type="button" id="as-create-utm-fields-btn" class="button button-secondary">
-                                    Create missing UTM fields
+                                <button type="button" id="as-create-utm-fields-btn" class="button button-primary">
+                                    <span class="dashicons dashicons-admin-tools" style="vertical-align:middle;margin-right:2px"></span>
+                                    Auto-create UTM fields
                                 </button>
                             </div>
                             <div id="as-create-utm-result" class="as-test-result" style="margin-top:10px;display:none"></div>
@@ -177,13 +174,12 @@ function as_render_settings_page(): void {
                         <tbody>
                             <?php
                             $utm_fields = [
-                                'as_cf_utm_medium'        => 'UTMmedium_custom',
-                                'as_cf_utm_campaign'      => 'UTMCampaign_Custom',
-                                'as_cf_utm_content'       => 'UTMContent_custom',
-                                'as_cf_utm_keyword'       => 'utm Keyword',
-                                'as_cf_utm_content_std'   => 'utm Content',
-                                'as_cf_utm_campaign_std'  => 'utm Campaign',
-                                'as_cf_gclid'             => 'GCLID',
+                                'as_cf_utm_campaign' => 'UTMCampaign_Custom',
+                                'as_cf_utm_medium'   => 'UTMmedium_custom',
+                                'as_cf_utm_content'  => 'UTMContent_custom',
+                                'as_cf_utm_keyword'  => 'utmkeyword_custom',
+                                'as_cf_utm_term'     => 'utmterm_custom',
+                                'as_cf_gclid'        => 'gclid_custom',
                             ];
                             foreach ( $utm_fields as $opt => $label ) : ?>
                             <tr>

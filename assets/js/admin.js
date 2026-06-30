@@ -154,21 +154,14 @@
     if ( ! btn ) return;
 
     btn.addEventListener( 'click', () => {
-      const folderId = document.getElementById( 'as-utm-folder-id' )?.value.trim();
       const resultEl = document.getElementById( 'as-create-utm-result' );
 
-      if ( ! folderId ) {
-        showResult( resultEl, 'error', '✗ Paste the UTM folder UUID first.' );
-        return;
-      }
-
       btn.disabled    = true;
-      btn.textContent = 'Creating…';
+      btn.innerHTML   = '<span class="dashicons dashicons-update" style="vertical-align:middle;animation:spin 1s linear infinite"></span> Working…';
 
       const data = new FormData();
-      data.append( 'action',    'as_create_utm_fields' );
-      data.append( 'nonce',     asAdmin.nonce );
-      data.append( 'folder_id', folderId );
+      data.append( 'action', 'as_create_utm_fields' );
+      data.append( 'nonce',  asAdmin.nonce );
 
       fetch( asAdmin.ajaxUrl, { method: 'POST', body: data } )
         .then( r => r.json() )

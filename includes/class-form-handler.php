@@ -16,8 +16,9 @@ class AS_Form_Handler {
     }
 
     /* ── Auto-create the UTM custom fields in GHL ──
-       For each plugin slot that has no UUID, POST to GHL's customFields
-       endpoint, save the returned id into that slot, and report back. */
+       Resolves the folder automatically (existing "UTM forms" folder or
+       the folder containing existing utm fields, otherwise creates one),
+       then creates each missing field inside it. */
     public function handle_create_utm_fields(): void {
         if ( ! check_ajax_referer( 'as_admin', 'nonce', false ) || ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => 'Unauthorized.' ], 403 );
@@ -25,26 +26,35 @@ class AS_Form_Handler {
 
         $api_key     = get_option( 'as_ghl_api_key', '' );
         $location_id = get_option( 'as_ghl_location_id', '' );
-        $folder_id   = sanitize_text_field( $_POST['folder_id'] ?? '' );
 
         if ( $api_key === '' || $location_id === '' ) {
             wp_send_json_error( [ 'message' => 'Save API Key and Location ID first.' ] );
         }
-        if ( $folder_id === '' ) {
-            wp_send_json_error( [ 'message' => 'Folder ID is required.' ] );
-        }
 
+        /* Resolve folder ID: cached → discovered from existing fields → create new */
+        $folder_id    = trim( (string) get_option( 'as_utm_folder_id', '' ) );
+        $folder_notes = [];
+
+        if ( $folder_id === '' ) {
+            $folder_id = $this->discover_utm_folder( $api_key, $location_id, $folder_notes );
+        }
+        if ( $folder_id === '' ) {
+            $folder_id = $this->create_utm_folder( $api_key, $location_id, $folder_notes );
+        }
+        if ( $folder_id === '' ) {
+            wp_send_json_error( [ 'message' => 'Could not find or create a UTM folder. ' . implode( ' | ', $folder_notes ) ] );
+        }
         update_option( 'as_utm_folder_id', $folder_id );
 
-        /* Plugin slot → [ name shown in GHL, fieldKey ] */
+        /* Plugin slot → [ name shown in GHL, fieldKey ]
+           These are the 6 canonical fields the scad_tracking_params script uses. */
         $defs = [
-            'as_cf_utm_medium'       => [ 'UTMmedium_custom',  'utmmedium_custom'   ],
-            'as_cf_utm_campaign'     => [ 'UTMCampaign_Custom','utmcampaign_custom' ],
-            'as_cf_utm_content'      => [ 'UTMContent_custom', 'utmcontent_custom'  ],
-            'as_cf_utm_keyword'      => [ 'utm Keyword',       'utmkeyword_custom'  ],
-            'as_cf_utm_content_std'  => [ 'utm Content',       'utm_content'        ],
-            'as_cf_utm_campaign_std' => [ 'utm Campaign',      'utm_campaign'       ],
-            'as_cf_gclid'            => [ 'GCLID',             'gclid_custom'       ],
+            'as_cf_utm_campaign' => [ 'UTMCampaign_Custom', 'utmcampaign_custom' ],
+            'as_cf_utm_medium'   => [ 'UTMmedium_custom',   'utmmedium_custom'   ],
+            'as_cf_utm_content'  => [ 'UTMContent_custom',  'utmcontent_custom'  ],
+            'as_cf_utm_keyword'  => [ 'utmkeyword_custom',  'utmkeyword_custom'  ],
+            'as_cf_utm_term'     => [ 'utmterm_custom',     'utmterm_custom'     ],
+            'as_cf_gclid'        => [ 'gclid_custom',       'gclid_custom'       ],
         ];
 
         $created = [];
@@ -103,10 +113,67 @@ class AS_Form_Handler {
         }
 
         wp_send_json_success( [
-            'created' => $created,
-            'skipped' => $skipped,
-            'failed'  => $failed,
+            'created'   => $created,
+            'skipped'   => $skipped,
+            'failed'    => $failed,
+            'folder_id' => $folder_id,
+            'folder'    => $folder_notes,
         ] );
+    }
+
+    /* Try to discover an existing folder: pick the parentId of any field
+       whose name or key contains "utm". Returns '' if none found. */
+    private function discover_utm_folder( string $api_key, string $location_id, array &$notes ): string {
+        $resp = wp_remote_get(
+            'https://services.leadconnectorhq.com/locations/' . rawurlencode( $location_id ) . '/customFields?model=contact',
+            [
+                'headers' => [ 'Authorization' => 'Bearer ' . $api_key, 'Version' => '2021-07-28' ],
+                'timeout' => 20,
+            ]
+        );
+        if ( is_wp_error( $resp ) ) { $notes[] = 'discover: ' . $resp->get_error_message(); return ''; }
+        $code = wp_remote_retrieve_response_code( $resp );
+        $body = json_decode( wp_remote_retrieve_body( $resp ), true );
+        if ( $code !== 200 ) { $notes[] = 'discover HTTP ' . $code; return ''; }
+
+        foreach ( ( $body['customFields'] ?? [] ) as $f ) {
+            $name = strtolower( $f['name']     ?? '' );
+            $key  = strtolower( $f['fieldKey'] ?? '' );
+            if ( ( strpos( $name, 'utm' ) !== false || strpos( $key, 'utm' ) !== false )
+                 && ! empty( $f['parentId'] ) ) {
+                $notes[] = 'discover: reused folder from "' . ( $f['name'] ?? '' ) . '"';
+                return $f['parentId'];
+            }
+        }
+        $notes[] = 'discover: no existing UTM field found';
+        return '';
+    }
+
+    /* Create a new "UTM forms" folder via GHL API. */
+    private function create_utm_folder( string $api_key, string $location_id, array &$notes ): string {
+        $resp = wp_remote_post(
+            'https://services.leadconnectorhq.com/locations/' . rawurlencode( $location_id ) . '/customFields/folder',
+            [
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $api_key,
+                    'Content-Type'  => 'application/json',
+                    'Version'       => '2021-07-28',
+                ],
+                'body'    => wp_json_encode( [ 'name' => 'UTM forms', 'model' => 'contact' ] ),
+                'timeout' => 20,
+            ]
+        );
+        if ( is_wp_error( $resp ) ) { $notes[] = 'create folder: ' . $resp->get_error_message(); return ''; }
+        $code = wp_remote_retrieve_response_code( $resp );
+        $body = json_decode( wp_remote_retrieve_body( $resp ), true );
+        if ( ! in_array( $code, [ 200, 201 ], true ) ) {
+            $msg = $body['message'] ?? "HTTP $code";
+            $notes[] = 'create folder: ' . $msg;
+            return '';
+        }
+        $id = $body['folder']['id'] ?? $body['id'] ?? $body['customFieldFolder']['id'] ?? '';
+        if ( $id ) $notes[] = 'created new folder "UTM forms"';
+        return $id;
     }
 
     public function handle_get_nonce(): void {
@@ -142,13 +209,12 @@ class AS_Form_Handler {
             'as_cf_to_city'           => $to,
             'as_cf_vehicle_type'      => $p['vehicle_type'],
             'as_cf_vehicle_status'    => $p['vehicle_status'],
-            'as_cf_utm_medium'        => $p['utmmedium_custom'],
-            'as_cf_utm_campaign'      => $p['utmcampaign_custom'],
-            'as_cf_utm_content'       => $p['utmcontent_custom'],
-            'as_cf_utm_keyword'       => $p['utmkeyword_custom'],
-            'as_cf_utm_content_std'   => $p['utmcontent_custom'],
-            'as_cf_utm_campaign_std'  => $p['utmcampaign_custom'],
-            'as_cf_gclid'             => $p['gclid_custom'],
+            'as_cf_utm_campaign' => $p['utmcampaign_custom'],
+            'as_cf_utm_medium'   => $p['utmmedium_custom'],
+            'as_cf_utm_content'  => $p['utmcontent_custom'],
+            'as_cf_utm_keyword'  => $p['utmkeyword_custom'],
+            'as_cf_utm_term'     => $p['utmterm_custom'],
+            'as_cf_gclid'        => $p['gclid_custom'],
         ] );
 
         $payload = [
