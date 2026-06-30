@@ -14,6 +14,7 @@ function as_save_settings(): void {
         'as_cf_utm_medium', 'as_cf_utm_campaign', 'as_cf_utm_content',
         'as_cf_utm_keyword', 'as_cf_utm_content_std', 'as_cf_utm_campaign_std',
         'as_cf_gclid',
+        'as_utm_folder_id',
     ];
 
     foreach ( $text_options as $opt ) {
@@ -149,6 +150,28 @@ function as_render_settings_page(): void {
                         </tbody>
                     </table>
                     <h3 style="margin-top:20px">UTM &amp; GCLID Tracking</h3>
+
+                    <!-- Auto-create UTM custom fields in GHL -->
+                    <div class="as-info-box" style="margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;background:#fff4ea;border:1px solid #fed7aa;padding:14px;border-radius:8px">
+                        <span class="dashicons dashicons-admin-tools" style="color:#ee7a00;font-size:18px"></span>
+                        <div style="flex:1;min-width:280px">
+                            <strong>Auto-create UTM fields in GHL</strong>
+                            <div style="font-size:12px;color:#555;margin-top:4px">
+                                Paste the parent folder UUID below (e.g. "UTM forms" folder) and click the button. The plugin will create any missing UTM custom fields directly in your GHL location and auto-fill the IDs.
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+                                <input type="text" id="as-utm-folder-id"
+                                       value="<?php echo esc_attr( get_option( 'as_utm_folder_id', '' ) ); ?>"
+                                       placeholder="UTM folder UUID (e.g. qQnV7NMUJ5QujwklRTF1)"
+                                       style="flex:1;min-width:260px">
+                                <button type="button" id="as-create-utm-fields-btn" class="button button-secondary">
+                                    Create missing UTM fields
+                                </button>
+                            </div>
+                            <div id="as-create-utm-result" class="as-test-result" style="margin-top:10px;display:none"></div>
+                        </div>
+                    </div>
+
                     <table class="as-cf-table widefat">
                         <thead><tr><th style="width:220px">GHL Field Name</th><th>GHL Custom Field ID</th></tr></thead>
                         <tbody>

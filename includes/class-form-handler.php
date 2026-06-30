@@ -11,6 +11,102 @@ class AS_Form_Handler {
         /* Always-fresh nonce — bypass page caching */
         add_action( 'wp_ajax_as_get_nonce',        [ $this, 'handle_get_nonce' ] );
         add_action( 'wp_ajax_nopriv_as_get_nonce', [ $this, 'handle_get_nonce' ] );
+        /* Auto-create UTM custom fields in GHL inside a chosen folder */
+        add_action( 'wp_ajax_as_create_utm_fields', [ $this, 'handle_create_utm_fields' ] );
+    }
+
+    /* ── Auto-create the UTM custom fields in GHL ──
+       For each plugin slot that has no UUID, POST to GHL's customFields
+       endpoint, save the returned id into that slot, and report back. */
+    public function handle_create_utm_fields(): void {
+        if ( ! check_ajax_referer( 'as_admin', 'nonce', false ) || ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( [ 'message' => 'Unauthorized.' ], 403 );
+        }
+
+        $api_key     = get_option( 'as_ghl_api_key', '' );
+        $location_id = get_option( 'as_ghl_location_id', '' );
+        $folder_id   = sanitize_text_field( $_POST['folder_id'] ?? '' );
+
+        if ( $api_key === '' || $location_id === '' ) {
+            wp_send_json_error( [ 'message' => 'Save API Key and Location ID first.' ] );
+        }
+        if ( $folder_id === '' ) {
+            wp_send_json_error( [ 'message' => 'Folder ID is required.' ] );
+        }
+
+        update_option( 'as_utm_folder_id', $folder_id );
+
+        /* Plugin slot → [ name shown in GHL, fieldKey ] */
+        $defs = [
+            'as_cf_utm_medium'       => [ 'UTMmedium_custom',  'utmmedium_custom'   ],
+            'as_cf_utm_campaign'     => [ 'UTMCampaign_Custom','utmcampaign_custom' ],
+            'as_cf_utm_content'      => [ 'UTMContent_custom', 'utmcontent_custom'  ],
+            'as_cf_utm_keyword'      => [ 'utm Keyword',       'utmkeyword_custom'  ],
+            'as_cf_utm_content_std'  => [ 'utm Content',       'utm_content'        ],
+            'as_cf_utm_campaign_std' => [ 'utm Campaign',      'utm_campaign'       ],
+            'as_cf_gclid'            => [ 'GCLID',             'gclid_custom'       ],
+        ];
+
+        $created = [];
+        $skipped = [];
+        $failed  = [];
+        $position = 0;
+
+        foreach ( $defs as $option_key => [ $name, $field_key ] ) {
+            $existing = trim( (string) get_option( $option_key, '' ) );
+            if ( $existing !== '' ) {
+                $skipped[] = $name;
+                continue;
+            }
+
+            $resp = wp_remote_post(
+                'https://services.leadconnectorhq.com/locations/' . rawurlencode( $location_id ) . '/customFields',
+                [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $api_key,
+                        'Content-Type'  => 'application/json',
+                        'Version'       => '2021-07-28',
+                    ],
+                    'body'    => wp_json_encode( [
+                        'name'        => $name,
+                        'dataType'    => 'TEXT',
+                        'fieldKey'    => $field_key,
+                        'parentId'    => $folder_id,
+                        'placeholder' => '',
+                        'model'       => 'contact',
+                        'position'    => $position++,
+                        'showInForms' => true,
+                    ] ),
+                    'timeout' => 20,
+                ]
+            );
+
+            if ( is_wp_error( $resp ) ) {
+                $failed[] = "$name: " . $resp->get_error_message();
+                continue;
+            }
+            $code = wp_remote_retrieve_response_code( $resp );
+            $body = json_decode( wp_remote_retrieve_body( $resp ), true );
+
+            if ( in_array( $code, [ 200, 201 ], true ) ) {
+                $id = $body['customField']['id'] ?? $body['id'] ?? '';
+                if ( $id ) {
+                    update_option( $option_key, sanitize_text_field( $id ) );
+                    $created[] = [ 'name' => $name, 'id' => $id, 'slot' => $option_key ];
+                } else {
+                    $failed[] = "$name: created but no id returned";
+                }
+            } else {
+                $msg = $body['message'] ?? $body['msg'] ?? "HTTP $code";
+                $failed[] = "$name: $msg";
+            }
+        }
+
+        wp_send_json_success( [
+            'created' => $created,
+            'skipped' => $skipped,
+            'failed'  => $failed,
+        ] );
     }
 
     public function handle_get_nonce(): void {

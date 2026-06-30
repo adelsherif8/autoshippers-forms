@@ -148,11 +148,79 @@
     } );
   }
 
+  /* ── Create missing UTM fields in GHL ── */
+  function initCreateUtmFields() {
+    const btn = document.getElementById( 'as-create-utm-fields-btn' );
+    if ( ! btn ) return;
+
+    btn.addEventListener( 'click', () => {
+      const folderId = document.getElementById( 'as-utm-folder-id' )?.value.trim();
+      const resultEl = document.getElementById( 'as-create-utm-result' );
+
+      if ( ! folderId ) {
+        showResult( resultEl, 'error', '✗ Paste the UTM folder UUID first.' );
+        return;
+      }
+
+      btn.disabled    = true;
+      btn.textContent = 'Creating…';
+
+      const data = new FormData();
+      data.append( 'action',    'as_create_utm_fields' );
+      data.append( 'nonce',     asAdmin.nonce );
+      data.append( 'folder_id', folderId );
+
+      fetch( asAdmin.ajaxUrl, { method: 'POST', body: data } )
+        .then( r => r.json() )
+        .then( res => {
+          if ( ! res.success ) {
+            showResult( resultEl, 'error', '✗ ' + ( res.data?.message || 'Failed.' ) );
+            return;
+          }
+          const c = res.data.created || [];
+          const s = res.data.skipped || [];
+          const f = res.data.failed  || [];
+
+          /* Auto-fill the matching UUID inputs */
+          c.forEach( item => {
+            const input = document.querySelector( 'input[name="' + item.slot + '"]' );
+            if ( input ) {
+              input.value = item.id;
+              input.style.background = '#dcfce7';
+            }
+          } );
+
+          let html = '';
+          if ( c.length ) {
+            html += '<div style="color:#166534;font-weight:600;margin-bottom:6px">✓ Created ' + c.length + ' field' + ( c.length !== 1 ? 's' : '' ) + ': ' + c.map( i => i.name ).join( ', ' ) + '</div>';
+            html += '<div style="font-size:11px;color:#166534;margin-bottom:6px">Click <strong>Save Settings</strong> below to save the new UUIDs.</div>';
+          }
+          if ( s.length ) {
+            html += '<div style="color:#6b7280;font-size:12px;margin-bottom:4px">↪ Skipped (already configured): ' + s.join( ', ' ) + '</div>';
+          }
+          if ( f.length ) {
+            html += '<div style="color:#dc2626;font-size:12px"><strong>✗ Failed:</strong><br>' + f.join( '<br>' ) + '</div>';
+          }
+          if ( ! html ) html = 'Nothing to do.';
+
+          resultEl.innerHTML    = html;
+          resultEl.className    = 'as-test-result ' + ( f.length ? 'as-result-error' : 'as-result-success' );
+          resultEl.style.display = 'block';
+        } )
+        .catch( () => showResult( resultEl, 'error', '✗ Network error.' ) )
+        .finally( () => {
+          btn.disabled    = false;
+          btn.textContent = 'Create missing UTM fields';
+        } );
+    } );
+  }
+
   document.addEventListener( 'DOMContentLoaded', () => {
     initTabs();
     initTestConnection();
     initFetchFields();
     initCopyButtons();
+    initCreateUtmFields();
   } );
 
 } )();
