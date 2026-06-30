@@ -131,6 +131,16 @@
       }
     }
 
+    /* Fetch a fresh nonce so cached pages with a stale nonce still submit */
+    _freshNonce() {
+      const d = new FormData();
+      d.append( 'action', 'as_get_nonce' );
+      return fetch( asData.ajaxUrl, { method: 'POST', body: d, cache: 'no-store' } )
+        .then( r => r.json() )
+        .then( res => ( res && res.success && res.data && res.data.nonce ) ? res.data.nonce : asData.nonce )
+        .catch( () => asData.nonce );
+    }
+
     /* ── Submit ── */
     submit() {
       if ( ! this._validate() ) return;
@@ -141,23 +151,25 @@
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending…';
       }
 
-      const data = new FormData();
-      data.append( 'action', 'as_submit' );
-      data.append( 'nonce',  asData.nonce );
+      this._freshNonce().then( nonce => {
+        const data = new FormData();
+        data.append( 'action', 'as_submit' );
+        data.append( 'nonce',  nonce );
 
-      this.wrap.querySelectorAll( 'input, select, textarea' ).forEach( el => {
-        if ( ! el.name ) return;
-        if ( el.type === 'radio' || el.type === 'checkbox' ) {
-          if ( el.checked ) data.set( el.name, el.value );
-        } else {
-          // date inputs store ISO value in dataset.dateVal; display text is in .value
-          data.set( el.name, el.dataset.dateVal ?? el.value );
-        }
-      } );
+        this.wrap.querySelectorAll( 'input, select, textarea' ).forEach( el => {
+          if ( ! el.name ) return;
+          if ( el.type === 'radio' || el.type === 'checkbox' ) {
+            if ( el.checked ) data.set( el.name, el.value );
+          } else {
+            // date inputs store ISO value in dataset.dateVal; display text is in .value
+            data.set( el.name, el.dataset.dateVal ?? el.value );
+          }
+        } );
 
-      appendUtms( data );
+        appendUtms( data );
 
-      fetch( asData.ajaxUrl, { method: 'POST', body: data } )
+        return fetch( asData.ajaxUrl, { method: 'POST', body: data } );
+      } )
         .then( r => r.json() )
         .then( res => {
           if ( res.success ) {
@@ -200,21 +212,19 @@
     }
   }
 
-  /* ── UTM capture ── */
-  const UTM_KEYS = [ 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid' ];
-
-  function captureUtms() {
-    const params = new URLSearchParams( window.location.search );
-    UTM_KEYS.forEach( k => {
-      const v = params.get( k );
-      if ( v ) sessionStorage.setItem( 'as_' + k, v );
-    } );
-  }
+  /* ── UTM / GCLID: read whatever the site-wide tracking script
+        stashed in sessionStorage['scad_tracking_params'] and append
+        the canonical lowercase keys to the form submission. ── */
+  const CUSTOM_KEYS = [
+    'utmcampaign_custom', 'utmmedium_custom', 'utmcontent_custom',
+    'utmkeyword_custom',  'utmterm_custom',    'gclid_custom'
+  ];
 
   function appendUtms( data ) {
-    UTM_KEYS.forEach( k => {
-      const v = sessionStorage.getItem( 'as_' + k );
-      if ( v ) data.append( k, v );
+    let stored = {};
+    try { stored = JSON.parse( sessionStorage.getItem( 'scad_tracking_params' ) || '{}' ); } catch ( e ) {}
+    CUSTOM_KEYS.forEach( k => {
+      if ( stored[ k ] ) data.append( k, stored[ k ] );
     } );
   }
 
@@ -256,7 +266,6 @@
   }
 
   document.addEventListener( 'DOMContentLoaded', () => {
-    captureUtms();
     fixDateInputs();
     document.querySelectorAll( '.as-wrapper[data-total]' ).forEach( wrap => new AsForm( wrap ) );
   } );

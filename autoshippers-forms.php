@@ -21,11 +21,17 @@ define( 'AS_GITHUB_REPO', 'adelsherif8/autoshippers-forms' );
 /* ── Includes ──────────────────────────────────────────────── */
 require_once AS_DIR . 'includes/class-updater.php';
 require_once AS_DIR . 'includes/class-ghl-api.php';
+require_once AS_DIR . 'includes/class-entries.php';
 require_once AS_DIR . 'includes/class-form-handler.php';
 
 new AS_Updater( AS_GITHUB_REPO, __FILE__, AS_VERSION );
 require_once AS_DIR . 'admin/admin-page.php';
+require_once AS_DIR . 'admin/entries-page.php';
 require_once AS_DIR . 'admin/instructions-page.php';
+
+/* ── Entries DB table ── */
+register_activation_hook( __FILE__, [ 'AS_Entries', 'maybe_create_table' ] );
+add_action( 'plugins_loaded',       [ 'AS_Entries', 'maybe_create_table' ] );
 
 /* ── Shortcode ──────────────────────────────────────────────── */
 add_shortcode( 'as_vehicle_quote', 'as_shortcode_vehicle_quote' );
@@ -74,6 +80,7 @@ function as_register_admin_menu() {
         31
     );
     add_submenu_page( 'as-settings', 'Settings',     'Settings',     'manage_options', 'as-settings',     'as_render_settings_page' );
+    add_submenu_page( 'as-settings', 'Entries',      'Entries',      'manage_options', 'as-entries',      'as_render_entries_page' );
     add_submenu_page( 'as-settings', 'Instructions', 'Instructions', 'manage_options', 'as-instructions', 'as_render_instructions_page' );
 }
 

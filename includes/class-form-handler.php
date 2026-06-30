@@ -8,9 +8,17 @@ class AS_Form_Handler {
         add_action( 'wp_ajax_nopriv_as_submit',    [ $this, 'handle_submit' ] );
         add_action( 'wp_ajax_as_test_connection',  [ $this, 'handle_test_connection' ] );
         add_action( 'wp_ajax_as_fetch_fields',     [ $this, 'handle_fetch_fields' ] );
+        /* Always-fresh nonce — bypass page caching */
+        add_action( 'wp_ajax_as_get_nonce',        [ $this, 'handle_get_nonce' ] );
+        add_action( 'wp_ajax_nopriv_as_get_nonce', [ $this, 'handle_get_nonce' ] );
     }
 
-    /* ── Form submission ──────────────────────────────────────── */
+    public function handle_get_nonce(): void {
+        nocache_headers();
+        wp_send_json_success( [ 'nonce' => wp_create_nonce( 'as_submit' ) ] );
+    }
+
+    /* ── Form submission ── */
     public function handle_submit(): void {
         if ( ! check_ajax_referer( 'as_submit', 'nonce', false ) ) {
             wp_send_json_error( [ 'message' => 'Security check failed.' ], 403 );
@@ -27,37 +35,72 @@ class AS_Form_Handler {
             ? $p['to_other']
             : $p['to_city'];
 
-        /* Build custom fields */
-        $custom_fields = AS_GHL_API::build_custom_fields( [
+        /* Build custom fields. UTMs come from the canonical scad_tracking_params
+           keys (utmcampaign_custom, utmmedium_custom, …). We still write to the
+           existing utm_medium / utm_campaign / utm_content / utm_keyword admin
+           slots since the user already has them mapped. */
+        $custom_fields = AS_GHL_API::build_custom_fields_v2( [
             'as_cf_move_type'         => $p['move_type'],
             'as_cf_pickup_date'       => $p['pickup_date'],
             'as_cf_from_city'         => $from,
             'as_cf_to_city'           => $to,
             'as_cf_vehicle_type'      => $p['vehicle_type'],
             'as_cf_vehicle_status'    => $p['vehicle_status'],
-            'as_cf_utm_medium'        => $p['utm_medium'],
-            'as_cf_utm_campaign'      => $p['utm_campaign'],
-            'as_cf_utm_content'       => $p['utm_content'],
-            'as_cf_utm_keyword'       => $p['utm_term'],
-            'as_cf_utm_content_std'   => $p['utm_content'],
-            'as_cf_utm_campaign_std'  => $p['utm_campaign'],
-            'as_cf_gclid'             => $p['gclid'],
+            'as_cf_utm_medium'        => $p['utmmedium_custom'],
+            'as_cf_utm_campaign'      => $p['utmcampaign_custom'],
+            'as_cf_utm_content'       => $p['utmcontent_custom'],
+            'as_cf_utm_keyword'       => $p['utmkeyword_custom'],
+            'as_cf_utm_content_std'   => $p['utmcontent_custom'],
+            'as_cf_utm_campaign_std'  => $p['utmcampaign_custom'],
+            'as_cf_gclid'             => $p['gclid_custom'],
         ] );
 
         $payload = [
-            'firstName'   => $p['first_name'],
-            'lastName'    => $p['last_name'],
-            'email'       => $p['email'],
-            'phone'       => $p['phone'],
-            'tags'        => [ 'AutoShippers - Vehicle Quote' ],
+            'firstName' => $p['first_name'],
+            'lastName'  => $p['last_name'],
+            'email'     => $p['email'],
+            'phone'     => $p['phone'],
+            'tags'      => [ 'AutoShippers - Vehicle Quote' ],
         ];
 
         if ( ! empty( $custom_fields ) ) {
             $payload['customFields'] = $custom_fields;
         }
 
+        /* Save entry locally before calling GHL so we never lose a lead */
+        $entry_data = [
+            'move_type'      => $p['move_type'],
+            'pickup_date'    => $p['pickup_date'],
+            'from_city'      => $from,
+            'to_city'        => $to,
+            'vehicle_type'   => $p['vehicle_type'],
+            'vehicle_status' => $p['vehicle_status'],
+        ];
+        foreach ( [ 'utmcampaign_custom','utmmedium_custom','utmcontent_custom','utmkeyword_custom','utmterm_custom','gclid_custom' ] as $k ) {
+            if ( ! empty( $p[ $k ] ) ) $entry_data[ $k ] = $p[ $k ];
+        }
+
+        $entry_id = AS_Entries::insert( [
+            'first_name' => $p['first_name'],
+            'last_name'  => $p['last_name'],
+            'email'      => $p['email'],
+            'phone'      => $p['phone'],
+            'tag'        => $payload['tags'][0] ?? '',
+            'data'       => $entry_data,
+            'ip'         => $this->get_ip(),
+        ] );
+
         $api    = new AS_GHL_API();
         $result = $api->upsert_contact( $payload );
+
+        AS_Entries::update_ghl_status(
+            $entry_id,
+            $result['success'] ? 'sent' : 'failed',
+            $result['message']  ?? '',
+            $result['request']  ?? '',
+            $result['response'] ?? '',
+            intval( $result['http'] ?? 0 )
+        );
 
         if ( $result['success'] ) {
             wp_send_json_success( [ 'message' => 'Quote request sent.' ] );
@@ -66,7 +109,7 @@ class AS_Form_Handler {
         }
     }
 
-    /* ── Test connection ─────────────────────────────────────── */
+    /* ── Test connection ── */
     public function handle_test_connection(): void {
         if ( ! check_ajax_referer( 'as_admin', 'nonce', false ) || ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => 'Unauthorized.' ], 403 );
@@ -85,7 +128,7 @@ class AS_Form_Handler {
         }
     }
 
-    /* ── Fetch GHL custom fields ─────────────────────────────── */
+    /* ── Fetch GHL custom fields ── */
     public function handle_fetch_fields(): void {
         if ( ! check_ajax_referer( 'as_admin', 'nonce', false ) || ! current_user_can( 'manage_options' ) ) {
             wp_send_json_error( [ 'message' => 'Unauthorized.' ], 403 );
@@ -109,15 +152,15 @@ class AS_Form_Handler {
             wp_send_json_error( [ 'message' => $response->get_error_message() ] );
         }
 
-        $code   = wp_remote_retrieve_response_code( $response );
-        $body   = json_decode( wp_remote_retrieve_body( $response ), true );
+        $code = wp_remote_retrieve_response_code( $response );
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
 
         if ( $code !== 200 ) {
             wp_send_json_error( [ 'message' => $body['message'] ?? "HTTP $code" ] );
         }
 
         $fields = array_map( fn( $f ) => [
-            'name' => $f['name'] ?? '',
+            'name' => $f['name']     ?? '',
             'key'  => $f['fieldKey'] ?? '',
             'id'   => $f['id']       ?? '',
         ], $body['customFields'] ?? [] );
@@ -125,13 +168,14 @@ class AS_Form_Handler {
         wp_send_json_success( [ 'fields' => $fields ] );
     }
 
-    /* ── Helpers ─────────────────────────────────────────────── */
+    /* ── Helpers ── */
     private function sanitize_post(): array {
         $keys = [
             'move_type', 'pickup_date', 'from_city', 'from_other',
             'to_city', 'to_other', 'vehicle_type', 'vehicle_status',
             'first_name', 'last_name', 'email', 'phone',
-            'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid',
+            'utmcampaign_custom', 'utmmedium_custom', 'utmcontent_custom',
+            'utmkeyword_custom',  'utmterm_custom',    'gclid_custom',
         ];
         $out = [];
         foreach ( $keys as $k ) {
@@ -139,6 +183,15 @@ class AS_Form_Handler {
         }
         $out['email'] = sanitize_email( $_POST['email'] ?? '' );
         return $out;
+    }
+
+    private function get_ip(): string {
+        foreach ( [ 'HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'REMOTE_ADDR' ] as $key ) {
+            if ( ! empty( $_SERVER[ $key ] ) ) {
+                return sanitize_text_field( explode( ',', $_SERVER[ $key ] )[0] );
+            }
+        }
+        return '0.0.0.0';
     }
 }
 

@@ -39,29 +39,52 @@ class AS_GHL_API {
     /* Create or update a contact in GHL */
     public function upsert_contact( array $payload ): array {
         $payload['locationId'] = $this->location_id;
+        $raw_body              = wp_json_encode( $payload );
 
         $response = wp_remote_post(
             self::BASE . 'contacts/upsert',
             [
                 'headers' => array_merge( $this->headers(), [ 'Content-Type' => 'application/json' ] ),
-                'body'    => wp_json_encode( $payload ),
+                'body'    => $raw_body,
                 'timeout' => 20,
             ]
         );
 
         if ( is_wp_error( $response ) ) {
-            return [ 'success' => false, 'message' => $response->get_error_message() ];
+            return [
+                'success'  => false,
+                'message'  => $response->get_error_message(),
+                'request'  => $raw_body,
+                'response' => '',
+                'http'     => 0,
+            ];
         }
 
-        $code = wp_remote_retrieve_response_code( $response );
-        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        $code     = wp_remote_retrieve_response_code( $response );
+        $raw_resp = wp_remote_retrieve_body( $response );
+        $body     = json_decode( $raw_resp, true );
+
+        $base = [ 'request' => $raw_body, 'response' => $raw_resp, 'http' => $code ];
 
         if ( in_array( $code, [ 200, 201 ], true ) ) {
-            return [ 'success' => true, 'contact' => $body['contact'] ?? [] ];
+            return array_merge( $base, [ 'success' => true, 'contact' => $body['contact'] ?? [], 'message' => 'OK' ] );
         }
 
         $msg = $body['message'] ?? "HTTP $code";
-        return [ 'success' => false, 'message' => $msg ];
+        return array_merge( $base, [ 'success' => false, 'message' => $msg ] );
+    }
+
+    /* Build the customFields array. Skip rows where the user pasted a field
+       key (contact.foo) instead of a UUID — GHL only accepts ids here. */
+    public static function build_custom_fields_v2( array $map ): array {
+        $fields = [];
+        foreach ( $map as $option_key => $value ) {
+            $stored = trim( (string) get_option( $option_key, '' ) );
+            if ( $stored === '' || $value === '' || $value === null ) continue;
+            if ( strpos( $stored, '.' ) !== false || strpos( $stored, '{{' ) !== false ) continue;
+            $fields[] = [ 'id' => $stored, 'value' => (string) $value ];
+        }
+        return $fields;
     }
 
     /* Build the customFields array from saved option IDs and submitted values */
