@@ -157,12 +157,19 @@ function as_render_settings_page(): void {
                         <div style="flex:1;min-width:280px">
                             <strong>Auto-create UTM fields in GHL</strong>
                             <div style="font-size:12px;color:#555;margin-top:4px">
-                                One-click setup. The plugin will find your existing "UTM forms" folder in GHL (or create one if it doesn't exist yet), create every missing UTM custom field inside it, and auto-fill the IDs in the table below.
+                                Paste the UUID of your "UTM forms" folder below, then click the button. The plugin will create every missing UTM custom field inside it and auto-fill the IDs.
+                            </div>
+                            <div style="font-size:11px;color:#78350f;margin-top:6px;background:#fef3c7;padding:8px 10px;border-radius:6px">
+                                <strong>How to find the folder ID:</strong> In GHL go to <em>Settings → Custom Fields → Contact tab</em>, click on the <strong>UTM forms</strong> folder. Look at your browser URL — it becomes <code>…/settings/fields?…&amp;parentId=<strong>XXXX</strong>&amp;object=contact</code>. Copy that <strong>parentId</strong> value.
                             </div>
                             <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+                                <input type="text" id="as-utm-folder-id"
+                                       value="<?php echo esc_attr( get_option( 'as_utm_folder_id', '' ) ); ?>"
+                                       placeholder="Paste UTM folder UUID (e.g. qQnV7NMUJ5QujwklRTF1)"
+                                       style="flex:1;min-width:260px">
                                 <button type="button" id="as-create-utm-fields-btn" class="button button-primary">
                                     <span class="dashicons dashicons-admin-tools" style="vertical-align:middle;margin-right:2px"></span>
-                                    Auto-create UTM fields
+                                    Create UTM fields
                                 </button>
                             </div>
                             <div id="as-create-utm-result" class="as-test-result" style="margin-top:10px;display:none"></div>

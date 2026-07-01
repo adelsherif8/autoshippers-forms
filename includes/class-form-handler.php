@@ -31,18 +31,20 @@ class AS_Form_Handler {
             wp_send_json_error( [ 'message' => 'Save API Key and Location ID first.' ] );
         }
 
-        /* Resolve folder ID: cached → discovered from existing fields → create new */
-        $folder_id    = trim( (string) get_option( 'as_utm_folder_id', '' ) );
+        /* Resolve folder ID:
+           1. From POST (user pasted it in the input)
+           2. Cached value
+           3. Auto-discovery (best-effort)
+           4. Auto-create (best-effort) */
         $folder_notes = [];
+        $folder_id    = sanitize_text_field( $_POST['folder_id'] ?? '' );
+
+        if ( $folder_id === '' ) $folder_id = trim( (string) get_option( 'as_utm_folder_id', '' ) );
+        if ( $folder_id === '' ) $folder_id = $this->discover_utm_folder( $api_key, $location_id, $folder_notes );
+        if ( $folder_id === '' ) $folder_id = $this->create_utm_folder( $api_key, $location_id, $folder_notes );
 
         if ( $folder_id === '' ) {
-            $folder_id = $this->discover_utm_folder( $api_key, $location_id, $folder_notes );
-        }
-        if ( $folder_id === '' ) {
-            $folder_id = $this->create_utm_folder( $api_key, $location_id, $folder_notes );
-        }
-        if ( $folder_id === '' ) {
-            wp_send_json_error( [ 'message' => 'Could not find or create a UTM folder. ' . implode( ' | ', $folder_notes ) ] );
+            wp_send_json_error( [ 'message' => 'Could not resolve a UTM folder. Paste the folder UUID in the input above and retry. Details: ' . implode( ' | ', $folder_notes ) ] );
         }
         update_option( 'as_utm_folder_id', $folder_id );
 

@@ -155,13 +155,20 @@
 
     btn.addEventListener( 'click', () => {
       const resultEl = document.getElementById( 'as-create-utm-result' );
+      const folderId = document.getElementById( 'as-utm-folder-id' )?.value.trim();
+
+      if ( ! folderId ) {
+        showResult( resultEl, 'error', '✗ Paste the UTM folder UUID first — see instructions above.' );
+        return;
+      }
 
       btn.disabled    = true;
-      btn.innerHTML   = '<span class="dashicons dashicons-update" style="vertical-align:middle;animation:spin 1s linear infinite"></span> Working…';
+      btn.innerHTML   = '<span class="dashicons dashicons-update" style="vertical-align:middle"></span> Working…';
 
       const data = new FormData();
-      data.append( 'action', 'as_create_utm_fields' );
-      data.append( 'nonce',  asAdmin.nonce );
+      data.append( 'action',    'as_create_utm_fields' );
+      data.append( 'nonce',     asAdmin.nonce );
+      data.append( 'folder_id', folderId );
 
       fetch( asAdmin.ajaxUrl, { method: 'POST', body: data } )
         .then( r => r.json() )
