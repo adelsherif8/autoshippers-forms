@@ -16,6 +16,27 @@
 
       this._bind();
       this._refresh();
+      this._initPhone();
+    }
+
+    /* Initialise intl-tel-input on the phone field so users get a country
+       flag dropdown and the number is auto-formatted per country. */
+    _initPhone() {
+      const phoneEl = this.wrap.querySelector( 'input[name="phone"]' );
+      if ( ! phoneEl || ! window.intlTelInput ) return;
+      this.iti = window.intlTelInput( phoneEl, {
+        initialCountry:     'ca',
+        preferredCountries: [ 'ca', 'us' ],
+        separateDialCode:   true,
+        utilsScript:        'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.12/build/js/utils.js',
+      } );
+      /* Live format on input */
+      phoneEl.addEventListener( 'input', () => {
+        if ( typeof window.intlTelInputUtils === 'undefined' ) return;
+        const raw = phoneEl.value;
+        const formatted = this.iti.getNumber( window.intlTelInputUtils.numberFormat.NATIONAL );
+        if ( formatted && formatted !== raw ) phoneEl.value = formatted;
+      } );
     }
 
     /* ── Step visibility ── */
@@ -92,6 +113,16 @@
         }
       }
 
+      /* Phone: must be a valid number for the selected country */
+      const phoneEl = step.querySelector( 'input[name="phone"]' );
+      if ( phoneEl && this.iti && phoneEl.value.trim() ) {
+        if ( ! this.iti.isValidNumber() ) {
+          this._showError( 'Please enter a valid phone number for the selected country.' );
+          phoneEl.focus();
+          return false;
+        }
+      }
+
       /* required radio groups */
       const radioGroups = new Set(
         [ ...step.querySelectorAll( 'input[type="radio"]' ) ].map( r => r.name )
@@ -160,6 +191,10 @@
           if ( ! el.name ) return;
           if ( el.type === 'radio' || el.type === 'checkbox' ) {
             if ( el.checked ) data.set( el.name, el.value );
+          } else if ( el.name === 'phone' && this.iti ) {
+            /* Send the full E.164 international number (e.g. +14165550100) */
+            const intl = this.iti.getNumber();
+            data.set( 'phone', intl || el.value );
           } else {
             // date inputs store ISO value in dataset.dateVal; display text is in .value
             data.set( el.name, el.dataset.dateVal ?? el.value );

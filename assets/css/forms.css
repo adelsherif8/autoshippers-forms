@@ -639,3 +639,20 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator {
   .as-trust { gap: 10px; flex-wrap: wrap; padding: 14px 16px; }
   .as-trust-item { font-size: 10px; }
 }
+
+/* ── intl-tel-input integration ───────────────────────────── */
+.as-wrapper .iti { display: block; width: 100%; }
+.as-wrapper .iti__tel-input.as-input {
+  padding-left: 100px !important; /* leave room for the country selector */
+}
+.as-wrapper .iti--separate-dial-code .iti__selected-flag {
+  background: var(--surface-2);
+  border-right: 1px solid var(--border);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+.as-wrapper .iti__country-list {
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  border: 1px solid var(--border);
+  max-height: 260px;
+}

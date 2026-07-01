@@ -33,10 +33,42 @@ require_once AS_DIR . 'admin/instructions-page.php';
 register_activation_hook( __FILE__, [ 'AS_Entries', 'maybe_create_table' ] );
 add_action( 'plugins_loaded',       [ 'AS_Entries', 'maybe_create_table' ] );
 
-/* ── Shortcode ──────────────────────────────────────────────── */
-add_shortcode( 'as_vehicle_quote', 'as_shortcode_vehicle_quote' );
+/* ── Shortcodes ─────────────────────────────────────────────
+   Both shortcodes share the same template and JS. They only differ
+   in the default set of chrome elements shown around the form card.
+   Every element can be individually toggled with attributes:
+     hero="true|false"     — big hero banner above the form
+     logo="true|false"     — AutoShippers logo
+     trust="true|false"    — Fully Insured / Fast Response strip
+     contact="true|false"  — Phone / Email / Address cards below the form
+
+   [as_vehicle_quote]                             — everything on
+   [as_vehicle_quote hero="false"]                — full page minus hero
+   [as_vehicle_quote_embed]                       — just the form card
+   [as_vehicle_quote_embed logo="true"]           — form card + logo above it */
+add_shortcode( 'as_vehicle_quote',        'as_shortcode_vehicle_quote' );
+add_shortcode( 'as_vehicle_quote_embed',  'as_shortcode_vehicle_quote_embed' );
 
 function as_shortcode_vehicle_quote( $atts ) {
+    return as_render_vehicle_quote( $atts, [ 'hero' => 1, 'logo' => 1, 'trust' => 1, 'contact' => 1 ] );
+}
+function as_shortcode_vehicle_quote_embed( $atts ) {
+    return as_render_vehicle_quote( $atts, [ 'hero' => 0, 'logo' => 0, 'trust' => 0, 'contact' => 0 ] );
+}
+function as_render_vehicle_quote( $atts, array $defaults ): string {
+    $atts = shortcode_atts( [
+        'hero'    => $defaults['hero'],
+        'logo'    => $defaults['logo'],
+        'trust'   => $defaults['trust'],
+        'contact' => $defaults['contact'],
+    ], (array) $atts );
+
+    /* Expose as vars the template can check */
+    $show_hero    = filter_var( $atts['hero'],    FILTER_VALIDATE_BOOLEAN );
+    $show_logo    = filter_var( $atts['logo'],    FILTER_VALIDATE_BOOLEAN );
+    $show_trust   = filter_var( $atts['trust'],   FILTER_VALIDATE_BOOLEAN );
+    $show_contact = filter_var( $atts['contact'], FILTER_VALIDATE_BOOLEAN );
+
     ob_start();
     include AS_DIR . 'templates/form-vehicle-quote.php';
     return ob_get_clean();
@@ -47,8 +79,11 @@ add_action( 'wp_enqueue_scripts', 'as_enqueue_frontend' );
 function as_enqueue_frontend() {
     wp_enqueue_style( 'as-fa',    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css', [], null );
     wp_enqueue_style( 'as-fonts', 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap', [], null );
-    wp_enqueue_style( 'as-forms', AS_URL . 'assets/css/forms.css', [ 'as-fa' ], AS_VERSION );
-    wp_enqueue_script( 'as-forms', AS_URL . 'assets/js/forms.js', [], AS_VERSION, true );
+    /* intl-tel-input: country flag dropdown + per-country phone formatting */
+    wp_enqueue_style(  'as-iti',  'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.12/build/css/intlTelInput.min.css', [], '23.0.12' );
+    wp_enqueue_script( 'as-iti',  'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.12/build/js/intlTelInput.min.js', [], '23.0.12', true );
+    wp_enqueue_style( 'as-forms', AS_URL . 'assets/css/forms.css', [ 'as-fa', 'as-iti' ], AS_VERSION );
+    wp_enqueue_script( 'as-forms', AS_URL . 'assets/js/forms.js', [ 'as-iti' ], AS_VERSION, true );
     wp_localize_script( 'as-forms', 'asData', [
         'ajaxUrl' => admin_url( 'admin-ajax.php' ),
         'nonce'   => wp_create_nonce( 'as_submit' ),

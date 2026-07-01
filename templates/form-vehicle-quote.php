@@ -1,24 +1,34 @@
 <?php if ( ! defined( 'ABSPATH' ) ) exit;
 $uid = 'as-' . wp_unique_id();
+/* Chrome toggles passed in by the shortcode function. Defaults match
+   the full-page shortcode so this template still works if included directly. */
+$show_hero    = $show_hero    ?? true;
+$show_logo    = $show_logo    ?? true;
+$show_trust   = $show_trust   ?? true;
+$show_contact = $show_contact ?? true;
 $cities = [
   'Toronto','Ottawa','Calgary','Vancouver','Edmonton',
   'Saskatoon','Regina','Winnipeg','Thunder Bay',
   'Moncton','Halifax','Saint John NB','Montreal',"St. John's NFL",'Other',
 ];
 ?>
+<?php if ( $show_hero ): ?>
 <!-- Hero banner -->
 <div class="as-hero">
   <div class="as-hero-eyebrow">FREE QUOTE</div>
   <h2 class="as-hero-title">Reserve within 24hrs &amp; save $100 more</h2>
   <p class="as-hero-sub">Get your instant quote online and save an extra $100 if you reserve online. Cancel for free at any time before your car is loaded</p>
 </div>
+<?php endif; ?>
 
-<div class="as-wrapper" id="<?php echo esc_attr( $uid ); ?>" data-total="3">
+<div class="as-wrapper<?php echo $show_hero ? '' : ' as-wrapper-compact'; ?>" id="<?php echo esc_attr( $uid ); ?>" data-total="3">
 
+  <?php if ( $show_logo ): ?>
   <!-- Logo -->
   <div class="as-logo">
     <img src="https://autoshippers.ca/wp-content/uploads/2024/10/Favicon-1.png" alt="AutoShippers">
   </div>
+  <?php endif; ?>
 
   <div class="as-card">
 
@@ -234,6 +244,7 @@ $cities = [
 
     </div><!-- /.as-body -->
 
+    <?php if ( $show_trust ): ?>
     <!-- Trust strip -->
     <div class="as-trust">
       <div class="as-trust-item"><i class="fa-solid fa-shield-halved"></i> Fully Insured</div>
@@ -241,25 +252,29 @@ $cities = [
       <div class="as-trust-item"><i class="fa-solid fa-dollar-sign"></i> No Hidden Fees</div>
       <div class="as-trust-item"><i class="fa-solid fa-map-location-dot"></i> Canada Wide</div>
     </div>
+    <?php endif; ?>
 
   </div><!-- /.as-card -->
-<!-- Contact strip -->
-<div class="as-contact-strip">
-  <a class="as-contact-item" href="tel:+16473706268">
-    <div class="as-contact-icon"><i class="fa-solid fa-phone-volume"></i></div>
-    <div class="as-contact-label">Phone</div>
-    <div class="as-contact-value">(647) 370-6268</div>
-  </a>
-  <a class="as-contact-item" href="mailto:dispatch@autoshippers.ca">
-    <div class="as-contact-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
-    <div class="as-contact-label">Email</div>
-    <div class="as-contact-value">dispatch@autoshippers.ca</div>
-  </a>
-  <a class="as-contact-item" href="https://maps.google.com/?q=482+South+Service+Road+Unit+134+Oakville+ON" target="_blank" rel="noopener">
-    <div class="as-contact-icon"><i class="fa-solid fa-map-location-dot"></i></div>
-    <div class="as-contact-label">Address</div>
-    <div class="as-contact-value">482 South Service Road Unit #134</div>
-  </a>
-</div>
+
+  <?php if ( $show_contact ): ?>
+  <!-- Contact strip -->
+  <div class="as-contact-strip">
+    <a class="as-contact-item" href="tel:+16473706268">
+      <div class="as-contact-icon"><i class="fa-solid fa-phone-volume"></i></div>
+      <div class="as-contact-label">Phone</div>
+      <div class="as-contact-value">(647) 370-6268</div>
+    </a>
+    <a class="as-contact-item" href="mailto:dispatch@autoshippers.ca">
+      <div class="as-contact-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+      <div class="as-contact-label">Email</div>
+      <div class="as-contact-value">dispatch@autoshippers.ca</div>
+    </a>
+    <a class="as-contact-item" href="https://maps.google.com/?q=482+South+Service+Road+Unit+134+Oakville+ON" target="_blank" rel="noopener">
+      <div class="as-contact-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+      <div class="as-contact-label">Address</div>
+      <div class="as-contact-value">482 South Service Road Unit #134</div>
+    </a>
+  </div>
+  <?php endif; ?>
 
 </div><!-- /.as-wrapper -->
