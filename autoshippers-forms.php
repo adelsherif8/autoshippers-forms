@@ -80,8 +80,8 @@ function as_enqueue_frontend() {
     wp_enqueue_style( 'as-fa',    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css', [], null );
     wp_enqueue_style( 'as-fonts', 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap', [], null );
     /* intl-tel-input: country flag dropdown + per-country phone formatting */
-    wp_enqueue_style(  'as-iti',  'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.12/build/css/intlTelInput.min.css', [], '23.0.12' );
-    wp_enqueue_script( 'as-iti',  'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.12/build/js/intlTelInput.min.js', [], '23.0.12', true );
+    wp_enqueue_style(  'as-iti',  'https://cdn.jsdelivr.net/npm/intl-tel-input@18.5.3/build/css/intlTelInput.min.css', [], '23.0.12' );
+    wp_enqueue_script( 'as-iti',  'https://cdn.jsdelivr.net/npm/intl-tel-input@18.5.3/build/js/intlTelInput.min.js', [], '23.0.12', true );
     wp_enqueue_style( 'as-forms', AS_URL . 'assets/css/forms.css', [ 'as-fa', 'as-iti' ], AS_VERSION );
     wp_enqueue_script( 'as-forms', AS_URL . 'assets/js/forms.js', [ 'as-iti' ], AS_VERSION, true );
     wp_localize_script( 'as-forms', 'asData', [

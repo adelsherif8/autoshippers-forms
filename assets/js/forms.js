@@ -28,7 +28,7 @@
         initialCountry:     'ca',
         preferredCountries: [ 'ca', 'us' ],
         separateDialCode:   true,
-        utilsScript:        'https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.12/build/js/utils.js',
+        utilsScript:        'https://cdn.jsdelivr.net/npm/intl-tel-input@18.5.3/build/js/utils.js',
       } );
       /* Live format on input */
       phoneEl.addEventListener( 'input', () => {
@@ -265,9 +265,13 @@
 
   /* ── iOS date input fix ──
      Real iOS Safari shows a blank / oversized box for type="date".
-     Keep it as type="text" always; swap to date only while the picker
-     is open, then restore text with a readable display value. */
+     Keep it as type="text" always on iOS; swap to date only while the picker
+     is open, then restore text with a readable display value.
+     On every other platform (desktop, Android), leave the native date input
+     alone — it works perfectly and the swap trick breaks Chrome's picker. */
+  const IS_IOS = /iPad|iPhone|iPod/.test( navigator.userAgent ) && ! window.MSStream;
   function fixDateInputs() {
+    if ( ! IS_IOS ) return;
     document.querySelectorAll( 'input[type="date"].as-input' ).forEach( inp => {
       inp.type = 'text';
 
