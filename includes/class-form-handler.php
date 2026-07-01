@@ -121,11 +121,13 @@ class AS_Form_Handler {
         ] );
     }
 
-    /* Try to discover an existing folder: pick the parentId of any field
-       whose name or key contains "utm". Returns '' if none found. */
+    /* Discover the UTM folder. Tries:
+       1. A folder document explicitly named "UTM forms" / containing "utm"
+       2. The parentId of any existing field whose name/key contains "utm" */
     private function discover_utm_folder( string $api_key, string $location_id, array &$notes ): string {
+        /* Fetch WITHOUT model filter so folder documents are included */
         $resp = wp_remote_get(
-            'https://services.leadconnectorhq.com/locations/' . rawurlencode( $location_id ) . '/customFields?model=contact',
+            'https://services.leadconnectorhq.com/locations/' . rawurlencode( $location_id ) . '/customFields',
             [
                 'headers' => [ 'Authorization' => 'Bearer ' . $api_key, 'Version' => '2021-07-28' ],
                 'timeout' => 20,
@@ -136,44 +138,100 @@ class AS_Form_Handler {
         $body = json_decode( wp_remote_retrieve_body( $resp ), true );
         if ( $code !== 200 ) { $notes[] = 'discover HTTP ' . $code; return ''; }
 
-        foreach ( ( $body['customFields'] ?? [] ) as $f ) {
+        $items = $body['customFields'] ?? $body['folders'] ?? [];
+
+        /* Pass 1: explicit folder document with UTM in the name */
+        foreach ( $items as $f ) {
+            $doc = strtolower( $f['documentType'] ?? '' );
+            if ( $doc !== 'folder' ) continue;
+            $name = strtolower( $f['name'] ?? '' );
+            if ( strpos( $name, 'utm' ) !== false ) {
+                $id = $f['id'] ?? $f['_id'] ?? '';
+                if ( $id ) {
+                    $notes[] = 'discover: found existing folder "' . ( $f['name'] ?? '' ) . '"';
+                    return $id;
+                }
+            }
+        }
+
+        /* Pass 2: fall back to a parentId of any field with "utm" in name/key */
+        foreach ( $items as $f ) {
             $name = strtolower( $f['name']     ?? '' );
             $key  = strtolower( $f['fieldKey'] ?? '' );
             if ( ( strpos( $name, 'utm' ) !== false || strpos( $key, 'utm' ) !== false )
                  && ! empty( $f['parentId'] ) ) {
-                $notes[] = 'discover: reused folder from "' . ( $f['name'] ?? '' ) . '"';
+                $notes[] = 'discover: reused folder from field "' . ( $f['name'] ?? '' ) . '"';
                 return $f['parentId'];
             }
         }
-        $notes[] = 'discover: no existing UTM field found';
-        return '';
-    }
 
-    /* Create a new "UTM forms" folder via GHL API. */
-    private function create_utm_folder( string $api_key, string $location_id, array &$notes ): string {
-        $resp = wp_remote_post(
-            'https://services.leadconnectorhq.com/locations/' . rawurlencode( $location_id ) . '/customFields/folder',
+        /* Pass 3: a dedicated folders endpoint, if GHL exposes it */
+        $resp2 = wp_remote_get(
+            'https://services.leadconnectorhq.com/locations/' . rawurlencode( $location_id ) . '/customFields/folders',
             [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $api_key,
-                    'Content-Type'  => 'application/json',
-                    'Version'       => '2021-07-28',
-                ],
-                'body'    => wp_json_encode( [ 'name' => 'UTM forms', 'model' => 'contact' ] ),
+                'headers' => [ 'Authorization' => 'Bearer ' . $api_key, 'Version' => '2021-07-28' ],
                 'timeout' => 20,
             ]
         );
-        if ( is_wp_error( $resp ) ) { $notes[] = 'create folder: ' . $resp->get_error_message(); return ''; }
-        $code = wp_remote_retrieve_response_code( $resp );
-        $body = json_decode( wp_remote_retrieve_body( $resp ), true );
-        if ( ! in_array( $code, [ 200, 201 ], true ) ) {
-            $msg = $body['message'] ?? "HTTP $code";
-            $notes[] = 'create folder: ' . $msg;
-            return '';
+        if ( ! is_wp_error( $resp2 ) && wp_remote_retrieve_response_code( $resp2 ) === 200 ) {
+            $b2 = json_decode( wp_remote_retrieve_body( $resp2 ), true );
+            foreach ( ( $b2['folders'] ?? $b2['customFieldFolders'] ?? [] ) as $f ) {
+                $name = strtolower( $f['name'] ?? '' );
+                if ( strpos( $name, 'utm' ) !== false ) {
+                    $id = $f['id'] ?? $f['_id'] ?? '';
+                    if ( $id ) {
+                        $notes[] = 'discover: found folder via folders endpoint';
+                        return $id;
+                    }
+                }
+            }
         }
-        $id = $body['folder']['id'] ?? $body['id'] ?? $body['customFieldFolder']['id'] ?? '';
-        if ( $id ) $notes[] = 'created new folder "UTM forms"';
-        return $id;
+
+        $notes[] = 'discover: no UTM folder found';
+        return '';
+    }
+
+    /* Create a new "UTM forms" folder. Tries multiple endpoint variants
+       since GHL's API version differs between accounts. */
+    private function create_utm_folder( string $api_key, string $location_id, array &$notes ): string {
+        $headers = [
+            'Authorization' => 'Bearer ' . $api_key,
+            'Content-Type'  => 'application/json',
+            'Version'       => '2021-07-28',
+        ];
+        $base = 'https://services.leadconnectorhq.com/locations/' . rawurlencode( $location_id );
+
+        $attempts = [
+            [ 'url' => $base . '/customFields/folder',  'body' => [ 'name' => 'UTM forms', 'model' => 'contact' ] ],
+            [ 'url' => $base . '/customFields/folders', 'body' => [ 'name' => 'UTM forms', 'model' => 'contact' ] ],
+            [ 'url' => $base . '/customFields',         'body' => [ 'name' => 'UTM forms', 'model' => 'contact', 'documentType' => 'folder' ] ],
+        ];
+
+        foreach ( $attempts as $a ) {
+            $resp = wp_remote_post( $a['url'], [
+                'headers' => $headers,
+                'body'    => wp_json_encode( $a['body'] ),
+                'timeout' => 20,
+            ] );
+            if ( is_wp_error( $resp ) ) {
+                $notes[] = 'create ' . $a['url'] . ': ' . $resp->get_error_message();
+                continue;
+            }
+            $code = wp_remote_retrieve_response_code( $resp );
+            $body = json_decode( wp_remote_retrieve_body( $resp ), true );
+            if ( in_array( $code, [ 200, 201 ], true ) ) {
+                $id = $body['folder']['id'] ?? $body['customField']['id'] ?? $body['id'] ?? $body['customFieldFolder']['id'] ?? '';
+                if ( $id ) {
+                    $notes[] = 'created new folder via ' . basename( $a['url'] );
+                    return $id;
+                }
+                $notes[] = $a['url'] . ': 200 but no id returned';
+            } else {
+                $msg = $body['message'] ?? $body['msg'] ?? "HTTP $code";
+                $notes[] = basename( $a['url'] ) . ': ' . $msg;
+            }
+        }
+        return '';
     }
 
     public function handle_get_nonce(): void {
