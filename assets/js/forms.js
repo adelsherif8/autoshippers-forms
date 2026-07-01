@@ -270,6 +270,21 @@
      On every other platform (desktop, Android), leave the native date input
      alone — it works perfectly and the swap trick breaks Chrome's picker. */
   const IS_IOS = /iPad|iPhone|iPod/.test( navigator.userAgent ) && ! window.MSStream;
+
+  /* On desktop/Android, open the browser's native calendar as soon as the
+     user clicks anywhere on the date input — not only on the tiny calendar
+     icon. Uses HTMLInputElement.showPicker() (Chrome 99+, FF 101+, Safari 16.4+). */
+  function makeDateFieldsClickable() {
+    document.querySelectorAll( 'input[type="date"].as-input' ).forEach( inp => {
+      const openPicker = e => {
+        if ( typeof inp.showPicker !== 'function' ) return;
+        try { inp.showPicker(); } catch ( err ) {}
+      };
+      inp.addEventListener( 'click', openPicker );
+      inp.addEventListener( 'focus', openPicker );
+    } );
+  }
+
   function fixDateInputs() {
     if ( ! IS_IOS ) return;
     document.querySelectorAll( 'input[type="date"].as-input' ).forEach( inp => {
@@ -306,6 +321,7 @@
 
   document.addEventListener( 'DOMContentLoaded', () => {
     fixDateInputs();
+    makeDateFieldsClickable();
     document.querySelectorAll( '.as-wrapper[data-total]' ).forEach( wrap => new AsForm( wrap ) );
   } );
 
