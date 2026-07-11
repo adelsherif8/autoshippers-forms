@@ -261,18 +261,24 @@ $cities = [
   <div class="as-contact-strip">
     <a class="as-contact-item" href="tel:+16473706268">
       <div class="as-contact-icon"><i class="fa-solid fa-phone-volume"></i></div>
-      <div class="as-contact-label">Phone</div>
-      <div class="as-contact-value">(647) 370-6268</div>
+      <div class="as-contact-text">
+        <div class="as-contact-label">Phone</div>
+        <div class="as-contact-value">(647) 370-6268</div>
+      </div>
     </a>
     <a class="as-contact-item" href="mailto:dispatch@autoshippers.ca">
       <div class="as-contact-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
-      <div class="as-contact-label">Email</div>
-      <div class="as-contact-value">dispatch@autoshippers.ca</div>
+      <div class="as-contact-text">
+        <div class="as-contact-label">Email</div>
+        <div class="as-contact-value">dispatch@autoshippers.ca</div>
+      </div>
     </a>
     <a class="as-contact-item" href="https://maps.google.com/?q=482+South+Service+Road+Unit+134+Oakville+ON" target="_blank" rel="noopener">
       <div class="as-contact-icon"><i class="fa-solid fa-map-location-dot"></i></div>
-      <div class="as-contact-label">Address</div>
-      <div class="as-contact-value">482 South Service Road Unit #134</div>
+      <div class="as-contact-text">
+        <div class="as-contact-label">Address</div>
+        <div class="as-contact-value">482 South Service Road Unit #134</div>
+      </div>
     </a>
   </div>
   <?php endif; ?>

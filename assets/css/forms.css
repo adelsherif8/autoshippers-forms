@@ -116,9 +116,10 @@
 }
 
 @media (max-width: 560px) {
-  .as-hero { padding: 36px 16px 32px; }
-  .as-hero-title { font-size: 24px; }
-  .as-contact-strip { grid-template-columns: 1fr; gap: 10px; }
+  .as-hero { padding: 22px 18px 20px; }
+  .as-hero-title { font-size: 21px; margin-bottom: 8px; line-height: 1.2; }
+  .as-hero-sub { font-size: 12.5px; line-height: 1.55; }
+  .as-contact-strip { grid-template-columns: 1fr; gap: 8px; padding: 0 12px; margin-top: 16px; }
 }
 
 /* ── Logo ─────────────────────────────────────────────────── */
@@ -585,8 +586,19 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator {
 
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 560px) {
-  .as-wrapper { padding: 16px 12px 32px; }
-  .as-body { padding: 20px 16px 20px; }
+  /* Full-bleed on mobile: the card uses the whole width, no floating gutter */
+  .as-wrapper { padding: 0 0 20px; max-width: 100%; }
+  .as-logo { margin: 14px 0 14px; }
+  .as-logo img { height: 52px; }
+  .as-card { border-radius: 0; border-left: none; border-right: none; box-shadow: none; }
+  .as-body { padding: 20px 16px 22px; }
+
+  /* Tighter step heading + rhythm so each step fits the screen */
+  .as-step-heading { gap: 10px; margin-bottom: 18px; }
+  .as-step-icon { width: 38px; height: 38px; border-radius: 9px; }
+  .as-step-icon i { font-size: 16px; }
+  .as-step-title { font-size: 18px; }
+  .as-divider { margin: 16px 0; }
 
   /* Tabs: number-only on small screens — always fit, never cut off */
   .as-step-tabs {
@@ -634,10 +646,25 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator {
 
   /* Status cards */
   .as-status-row { grid-template-columns: 1fr; gap: 8px; }
+  .as-status-card { padding: 14px; }
 
   /* Trust strip */
   .as-trust { gap: 10px; flex-wrap: wrap; padding: 14px 16px; }
   .as-trust-item { font-size: 10px; }
+
+  /* Contact strip: compact horizontal rows instead of tall stacked cards */
+  .as-contact-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    padding: 12px 16px;
+    border-radius: 12px;
+  }
+  .as-contact-icon { width: 40px; height: 40px; margin: 0; flex-shrink: 0; }
+  .as-contact-icon i { font-size: 16px; }
+  .as-contact-label { font-size: 11px; margin-bottom: 1px; }
+  .as-contact-value { font-size: 12.5px; }
 }
 
 /* ── intl-tel-input integration ───────────────────────────── */
