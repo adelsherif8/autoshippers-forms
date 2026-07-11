@@ -600,6 +600,14 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator {
   .as-step-title { font-size: 18px; }
   .as-divider { margin: 16px 0; }
 
+  /* Move Type cards: keep 2-up, equal height, no label wrap on narrow phones */
+  .as-choices-row.col2 { gap: 8px; }
+  .as-choice { display: flex; height: 100%; }
+  .as-choice-card { width: 100%; height: 100%; gap: 9px; padding: 13px 12px; }
+  .as-choice-icon-wrap { width: 30px; height: 30px; }
+  .as-choice-icon-wrap i { font-size: 14px; }
+  .as-choice-name { font-size: 12.5px; }
+
   /* Tabs: number-only on small screens — always fit, never cut off */
   .as-step-tabs {
     padding: 0;
