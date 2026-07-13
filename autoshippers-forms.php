@@ -3,7 +3,7 @@
  * Plugin Name:  AutoShippers Forms
  * Plugin URI:   https://upwork.com/freelancers/adelsherif8
  * Description:  Multi-step Vehicle Shipping Quote form with GoHighLevel CRM integration.
- * Version:      1.0.35
+ * Version:      1.0.36
  * Author:       Adel Emad
  * Author URI:   https://upwork.com/freelancers/adelsherif8
  * License:      GPL-2.0+
@@ -12,7 +12,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'AS_VERSION',  '1.0.35' );
+define( 'AS_VERSION',  '1.0.36' );
 define( 'AS_ITI_VERSION', '18.5.3' );
 define( 'AS_DIR',         plugin_dir_path( __FILE__ ) );
 define( 'AS_URL',         plugin_dir_url( __FILE__ ) );

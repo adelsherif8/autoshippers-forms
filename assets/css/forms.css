@@ -693,21 +693,70 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator {
 }
 
 /* ── intl-tel-input integration ───────────────────────────── */
-.as-wrapper .iti { display: block; width: 100%; }
-/* No padding-left override here on purpose: intl-tel-input measures the country
-   selector and sets the input's padding itself. The old hardcoded 100px was
-   wider than the real 70px selector, which is what left the number floating. */
-.as-wrapper .iti--separate-dial-code .iti__selected-flag {
-  background: var(--surface-2);
-  border-right: 1px solid var(--border);
-  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+/* Deterministic layout, everything !important. The old requestquote plugin
+   loads its own v17 intl-tel-input CSS globally; it collapsed our country
+   selector to 0px wide — the library then computed the wrong input padding
+   (number overlapped the +1) and, worse, the flag had no clickable area, so
+   the dropdown "never opened". Fixed widths end the measurement game. */
+.as-wrapper .iti { display: block !important; width: 100% !important; position: relative !important; }
+.as-wrapper .iti__flag-container {
+  position: absolute !important;
+  top: 0 !important; bottom: 0 !important; left: 0 !important; right: auto !important;
+  display: flex !important;
+  align-items: stretch !important;
+  padding: 0 !important; margin: 0 !important;
 }
+/* Clean look, same as the classic quote form: flag, dial code, small caret */
+.as-wrapper .iti__selected-flag {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  width: 100px !important;
+  height: 100% !important;
+  padding: 0 8px 0 14px !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-right: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm) !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+}
+.as-wrapper .iti__selected-dial-code {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--text) !important;
+  margin-left: 0 !important;
+}
+.as-wrapper .iti input[name="phone"] {
+  padding-left: 110px !important;
+}
+/* Dropdown panel. It is a child of the 100px flag container, so percentage
+   widths resolve against 100px — size it to content instead. The old plugin's
+   v17 CSS also sets the inner list position:absolute, which collapses the panel
+   to ~2px and it swallows every click; force the list back into normal flow. */
+.as-wrapper .iti__dropdown-content {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  width: max-content !important;
+  min-width: 280px !important;
+  max-width: calc(100vw - 48px) !important;
+  height: auto !important;
+  overflow: visible !important;
+  background: transparent !important;
+  border: none !important;
+  z-index: 99999 !important;
+  margin-top: 4px !important;
+}
+.as-wrapper .iti__country-list { position: static !important; }
 /* The country list is appended to the page body (a fullscreen popup on mobile),
    so it lives OUTSIDE .as-wrapper — anything scoped under .as-wrapper never
    reached it and the theme styled it instead (lowercase names, no flags). Target
    its own container too, with literal colours since the vars live on .as-wrapper. */
 .as-wrapper .iti__country-list,
 .iti--container .iti__country-list {
+  width: 100% !important;
   border-radius: 10px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.12);
   border: 1px solid #e5e7eb;
