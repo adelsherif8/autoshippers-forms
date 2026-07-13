@@ -22,11 +22,19 @@
        flag dropdown and the number is auto-formatted per country. */
     _initPhone() {
       const phoneEl = this.wrap.querySelector( 'input[name="phone"]' );
-      if ( ! phoneEl || ! window.intlTelInput ) return;
-      this.iti = window.intlTelInput( phoneEl, {
+      /* asIntlTelInput is our bundled copy. Never fall back to the shared
+         window.intlTelInput global: other plugins (requestquote) load their own
+         older version there, and mixing its JS with our CSS/sprite renders the
+         wrong flags and breaks the dropdown. */
+      const iti = window.asIntlTelInput;
+      if ( ! phoneEl || ! iti ) return;
+      this.iti = iti( phoneEl, {
         initialCountry:     'ca',
         preferredCountries: [ 'ca', 'us' ],
         separateDialCode:   true,
+        /* keep the dropdown inside .as-wrapper so our namespaced CSS styles it
+           and foreign intl-tel-input stylesheets can't reach it */
+        useFullscreenPopup: false,
         utilsScript:        ( window.asData && asData.itiUtils ) || '',
       } );
       /* Live format on input */
