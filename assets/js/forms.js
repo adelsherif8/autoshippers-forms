@@ -27,7 +27,7 @@
         initialCountry:     'ca',
         preferredCountries: [ 'ca', 'us' ],
         separateDialCode:   true,
-        utilsScript:        'https://cdn.jsdelivr.net/npm/intl-tel-input@18.5.3/build/js/utils.js',
+        utilsScript:        ( window.asData && asData.itiUtils ) || '',
       } );
       /* Live format on input */
       phoneEl.addEventListener( 'input', () => {

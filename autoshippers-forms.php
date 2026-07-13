@@ -3,7 +3,7 @@
  * Plugin Name:  AutoShippers Forms
  * Plugin URI:   https://upwork.com/freelancers/adelsherif8
  * Description:  Multi-step Vehicle Shipping Quote form with GoHighLevel CRM integration.
- * Version:      1.0.33
+ * Version:      1.0.34
  * Author:       Adel Emad
  * Author URI:   https://upwork.com/freelancers/adelsherif8
  * License:      GPL-2.0+
@@ -12,7 +12,8 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'AS_VERSION',  '1.0.33' );
+define( 'AS_VERSION',  '1.0.34' );
+define( 'AS_ITI_VERSION', '18.5.3' );
 define( 'AS_DIR',         plugin_dir_path( __FILE__ ) );
 define( 'AS_URL',         plugin_dir_url( __FILE__ ) );
 define( 'AS_BASENAME',    plugin_basename( __FILE__ ) );
@@ -79,14 +80,29 @@ add_action( 'wp_enqueue_scripts', 'as_enqueue_frontend' );
 function as_enqueue_frontend() {
     wp_enqueue_style( 'as-fa',    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css', [], null );
     wp_enqueue_style( 'as-fonts', 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap', [], null );
-    /* intl-tel-input: country flag dropdown + per-country phone formatting */
-    wp_enqueue_style(  'as-iti',  'https://cdn.jsdelivr.net/npm/intl-tel-input@18.5.3/build/css/intlTelInput.min.css', [], '23.0.12' );
-    wp_enqueue_script( 'as-iti',  'https://cdn.jsdelivr.net/npm/intl-tel-input@18.5.3/build/js/intlTelInput.min.js', [], '23.0.12', true );
+    /* intl-tel-input: country flag dropdown + per-country phone formatting.
+       Served from the plugin, not a CDN, so the CSS and JS can never end up on
+       different versions (which shifts the sprite and shows the wrong flag). */
+    $iti = AS_URL . 'assets/vendor/intl-tel-input/';
+    wp_enqueue_style(  'as-iti', $iti . 'css/intlTelInput.min.css', [], AS_ITI_VERSION );
+    wp_enqueue_script( 'as-iti', $iti . 'js/intlTelInput.min.js',   [], AS_ITI_VERSION, true );
+
+    /* The library points at its flag sprite with a relative path (../img/flags.png).
+       Any plugin that combines or relocates CSS breaks that path and the flags
+       render as the wrong country. Pin it to an absolute URL instead. */
+    wp_add_inline_style( 'as-iti', sprintf(
+        '.iti__flag{background-image:url(%1$simg/flags.png)!important}' .
+        '@media (-webkit-min-device-pixel-ratio:2),(min-resolution:192dpi){' .
+        '.iti__flag{background-image:url(%1$simg/flags@2x.png)!important}}',
+        esc_url( $iti )
+    ) );
+
     wp_enqueue_style( 'as-forms', AS_URL . 'assets/css/forms.css', [ 'as-fa', 'as-iti' ], AS_VERSION );
     wp_enqueue_script( 'as-forms', AS_URL . 'assets/js/forms.js', [ 'as-iti' ], AS_VERSION, true );
     wp_localize_script( 'as-forms', 'asData', [
-        'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-        'nonce'   => wp_create_nonce( 'as_submit' ),
+        'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
+        'nonce'     => wp_create_nonce( 'as_submit' ),
+        'itiUtils'  => $iti . 'js/utils.js',
     ] );
 }
 

@@ -694,17 +694,46 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator {
 
 /* ── intl-tel-input integration ───────────────────────────── */
 .as-wrapper .iti { display: block; width: 100%; }
-.as-wrapper .iti__tel-input.as-input {
-  padding-left: 100px !important; /* leave room for the country selector */
-}
+/* No padding-left override here on purpose: intl-tel-input measures the country
+   selector and sets the input's padding itself. The old hardcoded 100px was
+   wider than the real 70px selector, which is what left the number floating. */
 .as-wrapper .iti--separate-dial-code .iti__selected-flag {
   background: var(--surface-2);
   border-right: 1px solid var(--border);
   border-radius: var(--radius-sm) 0 0 var(--radius-sm);
 }
-.as-wrapper .iti__country-list {
+/* The country list is appended to the page body (a fullscreen popup on mobile),
+   so it lives OUTSIDE .as-wrapper — anything scoped under .as-wrapper never
+   reached it and the theme styled it instead (lowercase names, no flags). Target
+   its own container too, with literal colours since the vars live on .as-wrapper. */
+.as-wrapper .iti__country-list,
+.iti--container .iti__country-list {
   border-radius: 10px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-  border: 1px solid var(--border);
+  border: 1px solid #e5e7eb;
+  background: #fff !important;
   max-height: 260px;
+  margin: 0;
+  padding: 0;
+  list-style: none !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 14px !important;
+  text-align: left !important;
+  text-transform: none !important;
 }
+.as-wrapper .iti__country,
+.iti--container .iti__country {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px !important;
+  line-height: 1.4 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color: #111827 !important;
+}
+.as-wrapper .iti__country-name,
+.iti--container .iti__country-name { text-transform: none !important; }
+.as-wrapper .iti__dial-code,
+.iti--container .iti__dial-code    { color: #9ca3af !important; }
+.iti__flag { flex-shrink: 0; }
