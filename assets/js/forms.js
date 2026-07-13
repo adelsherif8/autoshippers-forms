@@ -113,10 +113,20 @@
         }
       }
 
-      /* Phone: must be a valid number for the selected country */
+      /* Phone: required, and still checked when intl-tel-input failed to load
+         (blocked CDN) — otherwise leads reach the CRM with no phone number. */
       const phoneEl = step.querySelector( 'input[name="phone"]' );
-      if ( phoneEl && this.iti && phoneEl.value.trim() ) {
-        if ( ! this.iti.isValidNumber() ) {
+      if ( phoneEl ) {
+        const raw = phoneEl.value.trim();
+        if ( ! raw ) {
+          this._showError( 'Please enter your phone number.' );
+          phoneEl.focus();
+          return false;
+        }
+        const valid = this.iti
+          ? this.iti.isValidNumber()
+          : raw.replace( /\D/g, '' ).length >= 10;
+        if ( ! valid ) {
           this._showError( 'Please enter a valid phone number for the selected country.' );
           phoneEl.focus();
           return false;
@@ -162,6 +172,23 @@
       }
     }
 
+    /* Normalise to E.164 (+14165550100) so GHL always gets a dialable number.
+       intl-tel-input gives us that directly; if it never loaded, rebuild it from
+       the digits and assume +1 for a bare 10-digit North American number. */
+    _e164( value ) {
+      if ( this.iti ) {
+        const intl = this.iti.getNumber();
+        if ( intl ) return intl;
+      }
+      const raw    = ( value || '' ).trim();
+      const digits = raw.replace( /\D/g, '' );
+      if ( ! digits ) return '';
+      if ( raw.startsWith( '+' ) ) return '+' + digits;
+      if ( digits.length === 10 )  return '+1' + digits;
+      if ( digits.length === 11 && digits.charAt( 0 ) === '1' ) return '+' + digits;
+      return raw;
+    }
+
     /* Fetch a fresh nonce so cached pages with a stale nonce still submit */
     _freshNonce() {
       const d = new FormData();
@@ -191,10 +218,8 @@
           if ( ! el.name ) return;
           if ( el.type === 'radio' || el.type === 'checkbox' ) {
             if ( el.checked ) data.set( el.name, el.value );
-          } else if ( el.name === 'phone' && this.iti ) {
-            /* Send the full E.164 international number (e.g. +14165550100) */
-            const intl = this.iti.getNumber();
-            data.set( 'phone', intl || el.value );
+          } else if ( el.name === 'phone' ) {
+            data.set( 'phone', this._e164( el.value ) );
           } else {
             // date inputs store ISO value in dataset.dateVal; display text is in .value
             data.set( el.name, el.dataset.dateVal ?? el.value );

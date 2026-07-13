@@ -206,20 +206,20 @@ $cities = [
         <div class="as-row">
           <div class="as-field">
             <label class="as-label">First Name <span class="as-required-star">*</span></label>
-            <input type="text" class="as-input" name="first_name" placeholder="John">
+            <input type="text" class="as-input" name="first_name" placeholder="John" required>
           </div>
           <div class="as-field">
             <label class="as-label">Last Name <span class="as-required-star">*</span></label>
-            <input type="text" class="as-input" name="last_name" placeholder="Smith">
+            <input type="text" class="as-input" name="last_name" placeholder="Smith" required>
           </div>
         </div>
         <div class="as-field">
           <label class="as-label">Email <span class="as-required-star">*</span></label>
-          <input type="email" class="as-input" name="email" placeholder="john@example.com">
+          <input type="email" class="as-input" name="email" placeholder="john@example.com" required>
         </div>
         <div class="as-field">
           <label class="as-label">Phone <span class="as-required-star">*</span></label>
-          <input type="tel" class="as-input" name="phone" placeholder="+1 (416) 555-0100">
+          <input type="tel" class="as-input" name="phone" placeholder="+1 (416) 555-0100" required>
         </div>
 
         <div class="as-actions" style="margin-top:20px">

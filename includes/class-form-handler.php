@@ -249,6 +249,17 @@ class AS_Form_Handler {
 
         $p = $this->sanitize_post();
 
+        /* Never hand the CRM a lead that is missing the contact essentials. The
+           browser blocks this too, but a bot or a stale cached script can still
+           POST straight here — that is how phone-less leads got through. */
+        foreach ( [ 'first_name' => 'first name', 'email' => 'email', 'phone' => 'phone number' ] as $key => $label ) {
+            if ( $p[ $key ] === '' ) {
+                wp_send_json_error( [ 'message' => "Please enter your {$label}." ], 400 );
+            }
+        }
+
+        $p['phone'] = $this->normalize_phone( $p['phone'] );
+
         /* Resolve "Other" city values */
         $from = $p['from_city'] === 'Other' && $p['from_other'] !== ''
             ? $p['from_other']
@@ -405,6 +416,18 @@ class AS_Form_Handler {
         }
         $out['email'] = sanitize_email( $_POST['email'] ?? '' );
         return $out;
+    }
+
+    /* Mirror of the browser's E.164 normalisation, in case the value arrives raw:
+       a bare 10-digit number is North American, so it gets a +1. */
+    private function normalize_phone( string $phone ): string {
+        $phone  = trim( $phone );
+        $digits = preg_replace( '/\D/', '', $phone );
+        if ( $digits === '' ) return '';
+        if ( str_starts_with( $phone, '+' ) )                 return '+' . $digits;
+        if ( strlen( $digits ) === 10 )                       return '+1' . $digits;
+        if ( strlen( $digits ) === 11 && $digits[0] === '1' ) return '+' . $digits;
+        return $phone;
     }
 
     private function get_ip(): string {
