@@ -523,6 +523,23 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator {
   color: #991b1b;
   font-size: 13px;
   font-weight: 500;
+  animation: asFadeUp 0.22s ease both;
+}
+
+/* ── Invalid field highlight ──────────────────────────────── */
+.as-input.as-invalid,
+.as-select.as-invalid {
+  border-color: var(--red) !important;
+  background: var(--red-dim);
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.10);
+}
+/* Radios are invisible, so outline the card group the visitor can actually see */
+.as-choices-row.as-invalid,
+.as-size-choices.as-invalid,
+.as-status-row.as-invalid {
+  outline: 1.5px solid var(--red);
+  outline-offset: 6px;
+  border-radius: var(--radius-sm);
 }
 
 /* ── Trust strip ──────────────────────────────────────────── */

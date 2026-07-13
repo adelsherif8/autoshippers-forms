@@ -112,14 +112,14 @@ $cities = [
         <div class="as-conditional" id="from-other-<?php echo esc_attr( $uid ); ?>" style="margin-top:10px">
           <div class="as-field">
             <label class="as-label">From (specify) <span class="as-required-star">*</span></label>
-            <input type="text" class="as-input" name="from_other" placeholder="Enter your city or town">
+            <input type="text" class="as-input" name="from_other" placeholder="Enter your city or town" required>
           </div>
         </div>
 
         <div class="as-conditional" id="to-other-<?php echo esc_attr( $uid ); ?>" style="margin-top:10px">
           <div class="as-field">
             <label class="as-label">To (specify) <span class="as-required-star">*</span></label>
-            <input type="text" class="as-input" name="to_other" placeholder="Enter destination city or town">
+            <input type="text" class="as-input" name="to_other" placeholder="Enter destination city or town" required>
           </div>
         </div>
 

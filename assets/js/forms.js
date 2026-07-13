@@ -12,7 +12,6 @@
       this.tabs     = wrap.querySelectorAll( '.as-tab' );
       this.stepTabs = wrap.querySelector( '.as-step-tabs' );
       this.trust    = wrap.querySelector( '.as-trust' );
-      this.errorEl  = wrap.querySelector( '.as-error-msg' );
 
       this._bind();
       this._refresh();
@@ -101,14 +100,16 @@
 
     /* ── Validation ── */
     _validate() {
-      const step = this.wrap.querySelector( `.as-step[data-step="${ this.current }"]` );
+      const step = this._step();
       if ( ! step ) return true;
+      this._clearError();
 
-      /* required text/email/tel/date */
+      /* required text/email/tel/date — skip conditionals that are hidden right
+         now (the "Other" city boxes), they only count once revealed. */
       for ( const inp of step.querySelectorAll( 'input[required], select[required], textarea[required]' ) ) {
+        if ( inp.offsetParent === null ) continue;
         if ( ! inp.value.trim() ) {
-          this._showError( 'Please fill in all required fields.' );
-          inp.focus();
+          this._showError( 'Please fill in all required fields.', inp );
           return false;
         }
       }
@@ -119,16 +120,14 @@
       if ( phoneEl ) {
         const raw = phoneEl.value.trim();
         if ( ! raw ) {
-          this._showError( 'Please enter your phone number.' );
-          phoneEl.focus();
+          this._showError( 'Please enter your phone number.', phoneEl );
           return false;
         }
         const valid = this.iti
           ? this.iti.isValidNumber()
           : raw.replace( /\D/g, '' ).length >= 10;
         if ( ! valid ) {
-          this._showError( 'Please enter a valid phone number for the selected country.' );
-          phoneEl.focus();
+          this._showError( 'Please enter a valid phone number for the selected country.', phoneEl );
           return false;
         }
       }
@@ -138,9 +137,8 @@
         [ ...step.querySelectorAll( 'input[type="radio"]' ) ].map( r => r.name )
       );
       for ( const name of radioGroups ) {
-        const checked = step.querySelector( `input[name="${ name }"]:checked` );
-        if ( ! checked ) {
-          this._showError( 'Please make a selection before continuing.' );
+        if ( ! step.querySelector( `input[name="${ name }"]:checked` ) ) {
+          this._showError( 'Please make a selection before continuing.', step.querySelector( `input[name="${ name }"]` ) );
           return false;
         }
       }
@@ -148,28 +146,70 @@
       /* required selects (From / To city) */
       for ( const sel of step.querySelectorAll( 'select.as-select' ) ) {
         if ( ! sel.value ) {
-          this._showError( 'Please select a city for both From and To.' );
-          sel.focus();
+          this._showError( 'Please select a city for both From and To.', sel );
           return false;
         }
       }
 
-      this._clearError();
       return true;
     }
 
-    _showError( msg ) {
-      if ( this.errorEl ) {
-        this.errorEl.textContent = msg;
-        this.errorEl.style.display = 'block';
+    _step() {
+      return this.wrap.querySelector( `.as-step[data-step="${ this.current }"]` );
+    }
+
+    /* The banner has to live in the step the visitor is actually looking at. A
+       single shared one sat inside step 3, so a failure on step 1 or 2 wrote into
+       a hidden element — the Continue button just looked dead and people left. */
+    _errorEl() {
+      const step = this._step();
+      if ( ! step ) return null;
+      let el = step.querySelector( '.as-error-msg' );
+      if ( ! el ) {
+        el = document.createElement( 'div' );
+        el.className = 'as-error-msg';
+        const actions = step.querySelector( '.as-actions' );
+        if ( actions ) actions.insertAdjacentElement( 'afterend', el );
+        else step.appendChild( el );
+      }
+      return el;
+    }
+
+    /* Radios are visually hidden, so flag the card group the visitor can see. */
+    _fieldToFlag( el ) {
+      if ( ! el ) return null;
+      if ( el.type === 'radio' ) {
+        return el.closest( '.as-choices-row, .as-size-choices, .as-status-row' );
+      }
+      return el;
+    }
+
+    _showError( msg, field ) {
+      const el = this._errorEl();
+      if ( el ) {
+        el.textContent = msg;
+        el.style.display = 'block';
+      }
+
+      const flag = this._fieldToFlag( field );
+      if ( flag ) {
+        flag.classList.add( 'as-invalid' );
+        flag.scrollIntoView( { behavior: 'smooth', block: 'center' } );
+        if ( typeof field.focus === 'function' && field.type !== 'radio' ) {
+          field.focus( { preventScroll: true } );
+        }
       }
     }
 
     _clearError() {
-      if ( this.errorEl ) {
-        this.errorEl.textContent   = '';
-        this.errorEl.style.display = 'none';
+      const step = this._step();
+      if ( ! step ) return;
+      const el = step.querySelector( '.as-error-msg' );
+      if ( el ) {
+        el.textContent   = '';
+        el.style.display = 'none';
       }
+      step.querySelectorAll( '.as-invalid' ).forEach( n => n.classList.remove( 'as-invalid' ) );
     }
 
     /* Normalise to E.164 (+14165550100) so GHL always gets a dialable number.
@@ -260,6 +300,16 @@
         if ( e.target.closest( '.as-btn-back' ) )   this.back();
         if ( e.target.closest( '.as-btn-submit' ) ) this.submit();
       } );
+
+      /* Drop the warning as soon as they put it right, so it never nags. */
+      const forgive = e => {
+        const el = e.target;
+        if ( ! el.name ) return;
+        const flagged = this._fieldToFlag( el );
+        if ( flagged && flagged.classList.contains( 'as-invalid' ) ) this._clearError();
+      };
+      this.wrap.addEventListener( 'input',  forgive );
+      this.wrap.addEventListener( 'change', forgive );
 
       /* "Other" city conditionals */
       this.wrap.addEventListener( 'change', e => {
