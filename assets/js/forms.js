@@ -1,12 +1,42 @@
 ( function () {
   'use strict';
 
+  /* ── Funnel tracking ──
+     Persistent session ID lives in localStorage so we can re-identify
+     the same visitor across page reloads in the same browser. */
+  function getSessionId() {
+    try {
+      let id = localStorage.getItem( 'as_session_id' );
+      if ( ! id ) {
+        id = 'as-' + Date.now().toString( 36 ) + '-' +
+             Math.random().toString( 36 ).slice( 2, 10 );
+        localStorage.setItem( 'as_session_id', id );
+      }
+      return id;
+    } catch ( e ) {
+      return 'as-anon-' + Math.floor( Math.random() * 1e9 );
+    }
+  }
+  function track( formType, event, step ) {
+    const d = new FormData();
+    d.append( 'action',    'as_track' );
+    d.append( 'session',   getSessionId() );
+    d.append( 'form_type', formType );
+    d.append( 'event',     event );
+    d.append( 'step',      String( step || 0 ) );
+    d.append( 'page_url',  window.location.origin + window.location.pathname );
+    /* Fire-and-forget. Keep alive so it survives navigation. */
+    fetch( asData.ajaxUrl, { method: 'POST', body: d, keepalive: true } ).catch( () => {} );
+  }
+
   class AsForm {
     constructor( wrap ) {
-      this.wrap    = wrap;
-      this.total   = parseInt( wrap.dataset.total, 10 );
-      this.current = 1;
-      this.uid     = wrap.id;
+      this.wrap     = wrap;
+      this.formType = 'vehicle_quote';
+      this.total    = parseInt( wrap.dataset.total, 10 );
+      this.current  = 1;
+      this.uid      = wrap.id;
+      this._seenSteps = new Set();
 
       this.progFill = wrap.querySelector( '.as-prog-fill' );
       this.tabs     = wrap.querySelectorAll( '.as-tab' );
@@ -16,6 +46,25 @@
       this._bind();
       this._refresh();
       this._initPhone();
+
+      /* Funnel: form rendered = landing page visit.
+         Step 1 fires only when the user actually engages (focus or click). */
+      track( this.formType, 'view', 0 );
+      const firstStep = () => {
+        this._trackStep( 1 );
+        this.wrap.removeEventListener( 'focusin', firstStep );
+        this.wrap.removeEventListener( 'click',   firstStep );
+        this.wrap.removeEventListener( 'change',  firstStep );
+      };
+      this.wrap.addEventListener( 'focusin', firstStep );
+      this.wrap.addEventListener( 'click',   firstStep );
+      this.wrap.addEventListener( 'change',  firstStep );
+    }
+
+    _trackStep( n ) {
+      if ( this._seenSteps.has( n ) ) return;
+      this._seenSteps.add( n );
+      track( this.formType, 'step', n );
     }
 
     /* Initialise intl-tel-input on the phone field so users get a country
@@ -89,6 +138,7 @@
       if ( ! this._validate() ) return;
       if ( this.current < this.total ) {
         this.current++;
+        this._trackStep( this.current );
         this._refresh();
         this._scrollTop();
       }
@@ -281,6 +331,7 @@
         .then( r => r.json() )
         .then( res => {
           if ( res.success ) {
+            track( this.formType, 'submit', 0 );
             this.current = this.total + 1;
             this._refresh();
           } else {

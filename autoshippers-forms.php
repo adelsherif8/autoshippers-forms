@@ -3,7 +3,7 @@
  * Plugin Name:  AutoShippers Forms
  * Plugin URI:   https://upwork.com/freelancers/adelsherif8
  * Description:  Multi-step Vehicle Shipping Quote form with GoHighLevel CRM integration.
- * Version:      1.0.36
+ * Version:      1.0.37
  * Author:       Adel Emad
  * Author URI:   https://upwork.com/freelancers/adelsherif8
  * License:      GPL-2.0+
@@ -12,7 +12,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'AS_VERSION',  '1.0.36' );
+define( 'AS_VERSION',  '1.0.37' );
 define( 'AS_ITI_VERSION', '18.5.3' );
 define( 'AS_DIR',         plugin_dir_path( __FILE__ ) );
 define( 'AS_URL',         plugin_dir_url( __FILE__ ) );
@@ -23,16 +23,20 @@ define( 'AS_GITHUB_REPO', 'adelsherif8/autoshippers-forms' );
 require_once AS_DIR . 'includes/class-updater.php';
 require_once AS_DIR . 'includes/class-ghl-api.php';
 require_once AS_DIR . 'includes/class-entries.php';
+require_once AS_DIR . 'includes/class-funnel.php';
 require_once AS_DIR . 'includes/class-form-handler.php';
 
 new AS_Updater( AS_GITHUB_REPO, __FILE__, AS_VERSION );
 require_once AS_DIR . 'admin/admin-page.php';
 require_once AS_DIR . 'admin/entries-page.php';
+require_once AS_DIR . 'admin/funnel-page.php';
 require_once AS_DIR . 'admin/instructions-page.php';
 
-/* ── Entries DB table ── */
+/* ── Entries + funnel DB tables ── */
 register_activation_hook( __FILE__, [ 'AS_Entries', 'maybe_create_table' ] );
 add_action( 'plugins_loaded',       [ 'AS_Entries', 'maybe_create_table' ] );
+register_activation_hook( __FILE__, [ 'AS_Funnel', 'maybe_create_table' ] );
+add_action( 'plugins_loaded',       [ 'AS_Funnel', 'maybe_create_table' ] );
 
 /* ── Shortcodes ─────────────────────────────────────────────
    Both shortcodes share the same template and JS. They only differ
@@ -138,6 +142,7 @@ function as_register_admin_menu() {
     );
     add_submenu_page( 'as-settings', 'Settings',     'Settings',     'manage_options', 'as-settings',     'as_render_settings_page' );
     add_submenu_page( 'as-settings', 'Entries',      'Entries',      'manage_options', 'as-entries',      'as_render_entries_page' );
+    add_submenu_page( 'as-settings', 'Funnel',       'Funnel',       'manage_options', 'as-funnel',       'as_render_funnel_page' );
     add_submenu_page( 'as-settings', 'Instructions', 'Instructions', 'manage_options', 'as-instructions', 'as_render_instructions_page' );
 }
 

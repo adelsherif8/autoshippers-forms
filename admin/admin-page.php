@@ -13,7 +13,7 @@ function as_save_settings(): void {
         'as_cf_to_city',   'as_cf_vehicle_type', 'as_cf_vehicle_status',
         'as_cf_utm_medium', 'as_cf_utm_campaign', 'as_cf_utm_content',
         'as_cf_utm_keyword', 'as_cf_utm_term',
-        'as_cf_gclid',
+        'as_cf_gclid', 'as_cf_latest_form_date',
         'as_utm_folder_id',
     ];
 
@@ -187,6 +187,7 @@ function as_render_settings_page(): void {
                                 'as_cf_utm_keyword'  => 'utmkeyword_custom',
                                 'as_cf_utm_term'     => 'utmterm_custom',
                                 'as_cf_gclid'        => 'gclid_custom',
+                                'as_cf_latest_form_date' => 'Latest Form Date',
                             ];
                             foreach ( $utm_fields as $opt => $label ) : ?>
                             <tr>

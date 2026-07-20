@@ -13,6 +13,25 @@ class AS_Form_Handler {
         add_action( 'wp_ajax_nopriv_as_get_nonce', [ $this, 'handle_get_nonce' ] );
         /* Auto-create UTM custom fields in GHL inside a chosen folder */
         add_action( 'wp_ajax_as_create_utm_fields', [ $this, 'handle_create_utm_fields' ] );
+        /* Funnel analytics events (view / step / submit) */
+        add_action( 'wp_ajax_as_track',             [ $this, 'handle_track' ] );
+        add_action( 'wp_ajax_nopriv_as_track',      [ $this, 'handle_track' ] );
+    }
+
+    /* ── Funnel: record a view / step / submit event ── */
+    public function handle_track(): void {
+        nocache_headers();
+        $session   = sanitize_text_field( $_POST['session']   ?? '' );
+        $form_type = sanitize_key( $_POST['form_type']        ?? '' );
+        $event     = sanitize_key( $_POST['event']            ?? '' );
+        $step      = intval( $_POST['step']                   ?? 0 );
+        $page_url  = esc_url_raw( $_POST['page_url']          ?? '' );
+        $ua        = sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ?? '' );
+
+        if ( $session && $form_type && in_array( $event, [ 'view', 'step', 'submit' ], true ) ) {
+            AS_Funnel::track( $session, $form_type, $event, $step, $page_url, $this->get_ip(), $ua );
+        }
+        wp_send_json_success();
     }
 
     /* ── Auto-create the UTM custom fields in GHL ──
@@ -57,6 +76,7 @@ class AS_Form_Handler {
             'as_cf_utm_keyword'  => [ 'utmkeyword_custom',  'utmkeyword_custom'  ],
             'as_cf_utm_term'     => [ 'utmterm_custom',     'utmterm_custom'     ],
             'as_cf_gclid'        => [ 'gclid_custom',       'gclid_custom'       ],
+            'as_cf_latest_form_date' => [ 'Latest Form Date', 'latest_form_date' ],
         ];
 
         $created = [];
@@ -286,6 +306,9 @@ class AS_Form_Handler {
             'as_cf_utm_keyword'  => $p['utmkeyword_custom'],
             'as_cf_utm_term'     => $p['utmterm_custom'],
             'as_cf_gclid'        => $p['gclid_custom'],
+            /* Stamped on every submission so the contact always carries the
+               date of their most recent form fill. */
+            'as_cf_latest_form_date' => current_time( 'Y-m-d' ),
         ] );
 
         $payload = [
