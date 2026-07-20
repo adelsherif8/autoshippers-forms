@@ -21,6 +21,9 @@ function as_save_settings(): void {
         update_option( $opt, sanitize_text_field( $_POST[ $opt ] ?? '' ) );
     }
 
+    /* Marketing landing pages tracked into the analytics funnel (page IDs) */
+    update_option( 'as_landing_pages', array_map( 'intval', (array) ( $_POST['as_landing_pages'] ?? [] ) ) );
+
     wp_redirect( admin_url( 'admin.php?page=as-settings&saved=1' ) );
     exit;
 }
@@ -44,6 +47,7 @@ function as_render_settings_page(): void {
         <div class="as-tab-nav">
             <button class="as-tab-btn active" data-tab="connection">GHL Connection</button>
             <button class="as-tab-btn" data-tab="fields">Custom Fields</button>
+            <button class="as-tab-btn" data-tab="analytics">Analytics</button>
             <button class="as-tab-btn" data-tab="shortcodes">Shortcode</button>
         </div>
 
@@ -209,6 +213,36 @@ function as_render_settings_page(): void {
             </div>
 
             <!-- ── Tab: Shortcode ── -->
+            <!-- ── Tab: Analytics ── -->
+            <div class="as-tab-panel" data-panel="analytics">
+                <div class="as-section">
+                    <h2>Analytics Tracking</h2>
+                    <p style="margin-bottom:18px;font-size:13px;color:#555">
+                        The quote form itself is tracked automatically (views, steps, submissions).
+                        Below you can additionally track <strong>marketing landing pages</strong> —
+                        pages that don't contain the form but funnel visitors toward it.
+                    </p>
+
+                    <div class="as-field-group">
+                        <label>Landing Pages <span style="font-weight:400;color:#9ca3af;">— marketing pages that lead to the quote form</span></label>
+                        <?php
+                        $as_lp = array_map( 'intval', (array) get_option( 'as_landing_pages', [] ) );
+                        $as_all_pages = get_pages( [ 'sort_column' => 'post_title', 'sort_order' => 'ASC' ] );
+                        ?>
+                        <select name="as_landing_pages[]" multiple size="8" style="width:100%;max-width:520px;padding:6px;border:1px solid #8c8f94;border-radius:4px;font-size:13px;">
+                            <?php foreach ( $as_all_pages as $p ): ?>
+                            <option value="<?php echo (int) $p->ID; ?>" <?php echo in_array( (int) $p->ID, $as_lp, true ) ? 'selected' : ''; ?>><?php echo esc_html( $p->post_title ); ?> (/<?php echo esc_html( $p->post_name ); ?>)</option>
+                            <?php endforeach; ?>
+                        </select>
+                        <p class="as-field-desc">Hold <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> to select multiple. Visitors who land on these pages are tracked as a "Marketing page visit" row at the top of the Analytics funnel, so you can see how many people came through a landing page before reaching the form. Deselect all to disable.</p>
+                    </div>
+                </div>
+
+                <div class="as-save-row">
+                    <?php submit_button( 'Save Settings', 'primary', 'submit', false ); ?>
+                </div>
+            </div>
+
             <div class="as-tab-panel" data-panel="shortcodes">
                 <div class="as-section">
                     <h2>Shortcode</h2>

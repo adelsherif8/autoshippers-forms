@@ -3,7 +3,7 @@
  * Plugin Name:  AutoShippers Forms
  * Plugin URI:   https://upwork.com/freelancers/adelsherif8
  * Description:  Multi-step Vehicle Shipping Quote form with GoHighLevel CRM integration.
- * Version:      1.0.39
+ * Version:      1.0.40
  * Author:       Adel Emad
  * Author URI:   https://upwork.com/freelancers/adelsherif8
  * License:      GPL-2.0+
@@ -12,7 +12,7 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-define( 'AS_VERSION',  '1.0.39' );
+define( 'AS_VERSION',  '1.0.40' );
 define( 'AS_ITI_VERSION', '18.5.3' );
 define( 'AS_DIR',         plugin_dir_path( __FILE__ ) );
 define( 'AS_URL',         plugin_dir_url( __FILE__ ) );
@@ -145,6 +145,52 @@ function as_register_admin_menu() {
     add_submenu_page( 'as-settings', 'Entries',      'Entries',      'manage_options', 'as-entries',      'as_render_entries_page' );
     add_submenu_page( 'as-settings', 'Analytics',    'Analytics',    'manage_options', 'as-analytics',    'as_render_analytics_tab' );
     add_submenu_page( 'as-settings', 'Instructions', 'Instructions', 'manage_options', 'as-instructions', 'as_render_instructions_page' );
+}
+
+/* ── Marketing landing-page tracker ─────────────────────────────
+   Fires a 'landing' analytics event on the pages chosen under
+   Settings → Analytics. Uses the same sessionStorage session id as
+   the form tracker (as_sid), so a visitor who goes landing page →
+   quote form counts as one journey in the funnel. Same pattern as
+   contact-form-ghl's cfg_landing_page_tracker. */
+add_action( 'wp_footer', 'as_landing_page_tracker' );
+function as_landing_page_tracker() {
+    if ( is_admin() ) return;
+
+    // get_queried_object_id() is more reliable in wp_footer than get_the_ID()
+    $page_id = (int) get_queried_object_id();
+    if ( ! $page_id ) $page_id = (int) get_the_ID();
+
+    $landing_pages = array_map( 'intval', (array) get_option( 'as_landing_pages', [] ) );
+
+    // Admin-only debug breadcrumb — view-source on any page to confirm what the tracker sees.
+    if ( current_user_can( 'manage_options' ) ) {
+        echo "\n<!-- AS Landing Tracker · page_id={$page_id} · landing_pages=" . wp_json_encode( $landing_pages ) . ' · matched=' . ( in_array( $page_id, $landing_pages, true ) ? 'yes' : 'no' ) . " -->\n";
+    }
+
+    if ( ! $page_id || ! in_array( $page_id, $landing_pages, true ) ) return;
+
+    $ajax_url = admin_url( 'admin-ajax.php' );
+    $page_url = get_permalink( $page_id );
+    ?>
+    <script>
+    (function(){
+        try {
+            var sid = sessionStorage.getItem('as_sid');
+            if (!sid) { sid = Math.random().toString(36).slice(2)+Date.now().toString(36); sessionStorage.setItem('as_sid', sid); }
+            if (sessionStorage.getItem('as_landing')) return;
+            sessionStorage.setItem('as_landing', '1');
+            var fd = new FormData();
+            fd.append('action','as_track');
+            fd.append('event_type','landing');
+            fd.append('step_key', String(<?php echo (int) $page_id; ?>));
+            fd.append('session_id', sid);
+            fd.append('page_url', '<?php echo esc_js( $page_url ); ?>');
+            fetch('<?php echo esc_js( $ajax_url ); ?>', { method:'POST', body: fd, credentials:'same-origin' }).catch(function(){});
+        } catch(e) {}
+    })();
+    </script>
+    <?php
 }
 
 /* ── Plugin action links ────────────────────────────────────── */
