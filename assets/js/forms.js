@@ -18,6 +18,7 @@
       fd.append( 'event_type', ev );
       fd.append( 'step_key',   sk || '' );
       fd.append( 'session_id', _asSid );
+      fd.append( 'page_url',   window.location.origin + window.location.pathname );
       fetch( asData.ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' } ).catch( function () {} );
     } catch ( e ) {}
   }

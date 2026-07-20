@@ -24,12 +24,13 @@ class AS_Form_Handler {
         $event_type = sanitize_key( $_POST['event_type'] ?? '' );
         $step_key   = sanitize_text_field( $_POST['step_key']   ?? '' );
         $session_id = sanitize_text_field( $_POST['session_id'] ?? '' );
+        $page_url   = esc_url_raw( $_POST['page_url'] ?? '' );
         $allowed    = [ 'view', 'start', 'step', 'complete' ];
         if ( ! in_array( $event_type, $allowed, true ) || $session_id === '' ) {
             wp_send_json_error();
             return;
         }
-        AS_Events::insert( $event_type, $step_key, $session_id );
+        AS_Events::insert( $event_type, $step_key, $session_id, $page_url );
         wp_send_json_success();
     }
 

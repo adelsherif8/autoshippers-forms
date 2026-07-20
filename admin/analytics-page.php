@@ -30,6 +30,7 @@ function as_render_analytics_tab() {
     $preset = sanitize_key( $_GET['as_range'] ?? '1m' );
     $from   = sanitize_text_field( $_GET['as_from'] ?? '' );
     $to     = sanitize_text_field( $_GET['as_to']   ?? '' );
+    $page_f = esc_url_raw( $_GET['as_page'] ?? '' );
     $range  = as_analytics_resolve_range( $preset, $from, $to );
     ?>
     <div class="wrap as-analytics">
@@ -41,6 +42,7 @@ function as_render_analytics_tab() {
             <span>Date range</span>
             <?php
             $base = admin_url( 'admin.php?page=as-analytics' );
+            if ( $page_f !== '' ) $base = add_query_arg( 'as_page', $page_f, $base );
             $presets = [ 'today'=>'Today','yesterday'=>'Yesterday','1w'=>'Last 7 days','2w'=>'Last 14 days','1m'=>'Last 30 days','3m'=>'Last 90 days','1y'=>'Last 12 months' ];
             foreach ( $presets as $pk => $pl ):
                 $active = ( $range['preset'] === $pk );
@@ -49,12 +51,42 @@ function as_render_analytics_tab() {
             <a href="<?= esc_url( $url ) ?>" class="<?= $active ? 'active' : '' ?>"><?= esc_html( $pl ) ?></a>
             <?php endforeach; ?>
         </div>
+
+        <!-- Landing page filter -->
+        <?php
+        global $wpdb;
+        $ev_table_early = $wpdb->prefix . 'as_events';
+        $tracked_pages  = [];
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$ev_table_early}'" ) === $ev_table_early ) {
+            $tracked_pages = $wpdb->get_col( $wpdb->prepare(
+                "SELECT DISTINCT page_url FROM {$ev_table_early} WHERE page_url<>'' AND DATE(created_at) BETWEEN %s AND %s ORDER BY page_url",
+                $range['from'], $range['to']
+            ) ) ?: [];
+        }
+        ?>
+        <form method="get" action="<?= esc_url( admin_url( 'admin.php' ) ) ?>" class="as-an-page-bar">
+            <input type="hidden" name="page" value="as-analytics">
+            <input type="hidden" name="as_range" value="<?= esc_attr( $range['preset'] ) ?>">
+            <span>Landing page</span>
+            <select name="as_page" onchange="this.form.submit()">
+                <option value="">All pages</option>
+                <?php foreach ( $tracked_pages as $tp ): ?>
+                    <option value="<?= esc_attr( $tp ) ?>" <?= $page_f === $tp ? 'selected' : '' ?>><?= esc_html( $tp ) ?></option>
+                <?php endforeach; ?>
+            </select>
+            <?php if ( empty( $tracked_pages ) ): ?>
+                <em style="font-size:11px;color:#9ca3af;">No tracked pages yet — pages appear after the first visit is recorded.</em>
+            <?php endif; ?>
+        </form>
         <style>
         .as-an-range-bar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:16px 0 22px;font-size:12px;}
         .as-an-range-bar > span:first-child{font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-right:8px;}
         .as-an-range-bar a{font-size:11.5px;padding:5px 11px;border-radius:14px;color:#475569;border:1px solid #e5e7eb;background:#fff;text-decoration:none;font-weight:500;transition:all .12s;}
         .as-an-range-bar a:hover{background:#f8fafc;border-color:#cbd5e1;color:#1d2327;}
         .as-an-range-bar a.active{background:#ee7a00;color:#fff;border-color:#ee7a00;font-weight:600;}
+        .as-an-page-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-8px 0 22px;font-size:12px;}
+        .as-an-page-bar > span:first-of-type{font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-right:8px;}
+        .as-an-page-bar select{font-size:12px;min-width:280px;max-width:520px;height:30px;border:1px solid #e5e7eb;border-radius:8px;padding:0 8px;color:#475569;}
         .as-an-card{background:#fff;border:1px solid #e8eaed;border-radius:12px;padding:22px 24px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
         .as-an-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:18px;}
         .as-an-tile{background:#f8fafc;border-radius:10px;padding:16px;text-align:center;}
@@ -75,13 +107,16 @@ function as_render_analytics_tab() {
         </style>
 
         <?php
-        global $wpdb;
         $ev_table  = $wpdb->prefix . 'as_events';
         $en_table  = $wpdb->prefix . 'as_entries';
         $ev_exists = $wpdb->get_var( "SHOW TABLES LIKE '{$ev_table}'" ) === $ev_table;
         $an_from   = $range['from'];
         $an_to     = $range['to'];
         $an_where  = $wpdb->prepare( 'DATE(created_at) BETWEEN %s AND %s', $an_from, $an_to );
+        /* Event queries additionally honour the landing-page filter. Entries have
+           no page dimension, so a filtered "Submitted" falls back to unique
+           sessions that fired 'complete' on that page. */
+        $ev_where  = $an_where . ( $page_f !== '' ? $wpdb->prepare( ' AND page_url=%s', $page_f ) : '' );
 
         // Actual submitted entries (source of truth for "completed")
         $entries_cnt = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$en_table} WHERE {$an_where}" );
@@ -90,14 +125,19 @@ function as_render_analytics_tab() {
         $entries_err = $entries_cnt - $entries_ok;
 
         // Funnel counts (unique sessions)
-        $views    = 0; $starts = 0;
+        $views    = 0; $starts = 0; $completes = 0;
         $step_cnts = [];
         if ( $ev_exists ) {
-            $views   = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT session_id) FROM {$ev_table} WHERE event_type='view'  AND {$an_where}" );
-            $starts  = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT session_id) FROM {$ev_table} WHERE event_type='start' AND {$an_where}" );
-            $rows    = $wpdb->get_results( "SELECT step_key, COUNT(DISTINCT session_id) AS cnt FROM {$ev_table} WHERE event_type='step' AND {$an_where} AND step_key<>'' GROUP BY step_key", ARRAY_A );
+            $views     = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT session_id) FROM {$ev_table} WHERE event_type='view'  AND {$ev_where}" );
+            $starts    = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT session_id) FROM {$ev_table} WHERE event_type='start' AND {$ev_where}" );
+            $completes = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT session_id) FROM {$ev_table} WHERE event_type='complete' AND {$ev_where}" );
+            $rows      = $wpdb->get_results( "SELECT step_key, COUNT(DISTINCT session_id) AS cnt FROM {$ev_table} WHERE event_type='step' AND {$ev_where} AND step_key<>'' GROUP BY step_key", ARRAY_A );
             foreach ( $rows as $r ) $step_cnts[ $r['step_key'] ] = (int) $r['cnt'];
         }
+
+        /* Submitted: entries table site-wide; complete events when a single
+           landing page is selected. */
+        $submitted = $page_f !== '' ? $completes : $entries_cnt;
 
         // Canonical question order + friendly labels
         $canon = [
@@ -105,11 +145,15 @@ function as_render_analytics_tab() {
             'vehicle'  => 'Vehicle details (type & status)',
             'contact'  => 'Contact form reached',
         ];
-        $conv = $views > 0 ? round( $entries_cnt / $views * 100 ) : 0;
+        $conv = $views > 0 ? round( $submitted / $views * 100 ) : 0;
 
-        // Daily submissions
+        // Daily submissions (per landing page: completions on that page)
         $days = max( 1, (int) round( ( strtotime( $an_to ) - strtotime( $an_from ) ) / 86400 ) + 1 );
-        $daily = $wpdb->get_results( "SELECT DATE(created_at) AS day, COUNT(*) AS cnt FROM {$en_table} WHERE {$an_where} GROUP BY DATE(created_at)", ARRAY_A );
+        if ( $page_f !== '' && $ev_exists ) {
+            $daily = $wpdb->get_results( "SELECT DATE(created_at) AS day, COUNT(DISTINCT session_id) AS cnt FROM {$ev_table} WHERE event_type='complete' AND {$ev_where} GROUP BY DATE(created_at)", ARRAY_A );
+        } else {
+            $daily = $wpdb->get_results( "SELECT DATE(created_at) AS day, COUNT(*) AS cnt FROM {$en_table} WHERE {$an_where} GROUP BY DATE(created_at)", ARRAY_A );
+        }
         $daily_map = [];
         foreach ( $daily as $r ) $daily_map[ $r['day'] ] = (int) $r['cnt'];
         $daily_filled = [];
@@ -130,14 +174,14 @@ function as_render_analytics_tab() {
         <div class="as-an-grid">
             <div class="as-an-tile"><div class="num"><?= $views ?></div><div class="lbl">Unique visitors</div></div>
             <div class="as-an-tile"><div class="num"><?= $starts ?></div><div class="lbl">Started the form</div></div>
-            <div class="as-an-tile hi"><div class="num"><?= $entries_cnt ?></div><div class="lbl">Submitted</div></div>
+            <div class="as-an-tile hi"><div class="num"><?= $submitted ?></div><div class="lbl">Submitted</div></div>
             <div class="as-an-tile"><div class="num"><?= $conv ?>%</div><div class="lbl">Views → submit</div></div>
         </div>
 
         <!-- Funnel -->
         <div class="as-an-card">
             <div style="font-size:15px;font-weight:700;color:#ee7a00;margin-bottom:3px;">Funnel — Vehicle Shipping Quote</div>
-            <div style="font-size:11.5px;color:#9ca3af;margin-bottom:16px;">How each visitor moves from reaching the page to submitting the form. <?= esc_html( $range['label'] ) ?>.</div>
+            <div style="font-size:11.5px;color:#9ca3af;margin-bottom:16px;">How each visitor moves from reaching the page to submitting the form. <?= esc_html( $range['label'] ) ?>.<?= $page_f !== '' ? ' Filtered to ' . esc_html( $page_f ) . '.' : '' ?></div>
             <?php
             $funnel_rows = [
                 [ 'lbl' => 'Reached the vehicle shipping quote page', 'cnt' => $views ],
@@ -146,7 +190,7 @@ function as_render_analytics_tab() {
             foreach ( $canon as $key => $lbl ) {
                 $funnel_rows[] = [ 'lbl' => $lbl, 'cnt' => $step_cnts[ $key ] ?? 0 ];
             }
-            $funnel_rows[] = [ 'lbl' => 'Submitted form (became a lead)', 'cnt' => $entries_cnt ];
+            $funnel_rows[] = [ 'lbl' => 'Submitted form (became a lead)', 'cnt' => $submitted ];
             $fmax = max( 1, max( array_column( $funnel_rows, 'cnt' ) ) );
             foreach ( $funnel_rows as $row ):
                 $cnt  = (int) $row['cnt'];
@@ -166,10 +210,10 @@ function as_render_analytics_tab() {
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:20px;">
                 <div>
                     <div style="font-size:15px;font-weight:700;color:#1d2327;">Daily Submissions</div>
-                    <div style="font-size:11.5px;color:#9ca3af;">Form submissions per day · <?= esc_html( $range['label'] ) ?></div>
+                    <div style="font-size:11.5px;color:#9ca3af;"><?= $page_f !== '' ? 'Completions on this landing page per day' : 'Form submissions per day' ?> · <?= esc_html( $range['label'] ) ?></div>
                 </div>
                 <div style="display:flex;gap:20px;">
-                    <div style="text-align:right;"><div style="font-size:24px;font-weight:700;color:#ee7a00;line-height:1;"><?= $entries_cnt ?></div><div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-top:5px;font-weight:600;">Total</div></div>
+                    <div style="text-align:right;"><div style="font-size:24px;font-weight:700;color:#ee7a00;line-height:1;"><?= $submitted ?></div><div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-top:5px;font-weight:600;">Total</div></div>
                     <div style="text-align:right;"><div style="font-size:24px;font-weight:700;color:#1d2327;line-height:1;"><?= (int) $daily_max ?></div><div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-top:5px;font-weight:600;">Peak day</div></div>
                 </div>
             </div>
@@ -190,7 +234,7 @@ function as_render_analytics_tab() {
         <?php $ok_pct = $entries_cnt > 0 ? round( $entries_ok / $entries_cnt * 100 ) : 100; ?>
         <div class="as-an-card">
             <div style="font-size:15px;font-weight:700;color:#1d2327;margin-bottom:3px;">GHL Send Health</div>
-            <div style="font-size:11.5px;color:#9ca3af;margin-bottom:14px;">Percentage of submissions that reached GoHighLevel successfully. <?= esc_html( $range['label'] ) ?>.</div>
+            <div style="font-size:11.5px;color:#9ca3af;margin-bottom:14px;">Percentage of submissions that reached GoHighLevel successfully. <?= esc_html( $range['label'] ) ?>.<?= $page_f !== '' ? ' Covers all pages — sends are not split by landing page.' : '' ?></div>
             <div style="display:flex;align-items:center;gap:24px;">
                 <div style="position:relative;width:72px;height:72px;flex-shrink:0;">
                     <svg viewBox="0 0 36 36" style="width:72px;height:72px;transform:rotate(-90deg);">
