@@ -18,19 +18,18 @@ class AS_Form_Handler {
         add_action( 'wp_ajax_nopriv_as_track',      [ $this, 'handle_track' ] );
     }
 
-    /* ── Funnel: record a view / step / submit event ── */
+    /* ── Analytics: record a view / start / step / complete milestone ── */
     public function handle_track(): void {
         nocache_headers();
-        $session   = sanitize_text_field( $_POST['session']   ?? '' );
-        $form_type = sanitize_key( $_POST['form_type']        ?? '' );
-        $event     = sanitize_key( $_POST['event']            ?? '' );
-        $step      = intval( $_POST['step']                   ?? 0 );
-        $page_url  = esc_url_raw( $_POST['page_url']          ?? '' );
-        $ua        = sanitize_text_field( $_SERVER['HTTP_USER_AGENT'] ?? '' );
-
-        if ( $session && $form_type && in_array( $event, [ 'view', 'step', 'submit' ], true ) ) {
-            AS_Funnel::track( $session, $form_type, $event, $step, $page_url, $this->get_ip(), $ua );
+        $event_type = sanitize_key( $_POST['event_type'] ?? '' );
+        $step_key   = sanitize_text_field( $_POST['step_key']   ?? '' );
+        $session_id = sanitize_text_field( $_POST['session_id'] ?? '' );
+        $allowed    = [ 'view', 'start', 'step', 'complete' ];
+        if ( ! in_array( $event_type, $allowed, true ) || $session_id === '' ) {
+            wp_send_json_error();
+            return;
         }
+        AS_Events::insert( $event_type, $step_key, $session_id );
         wp_send_json_success();
     }
 
