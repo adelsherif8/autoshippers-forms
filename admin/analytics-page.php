@@ -125,20 +125,15 @@ function as_render_analytics_tab() {
         $entries_err = $entries_cnt - $entries_ok;
 
         // Funnel counts (unique sessions)
-        $views    = 0; $starts = 0; $completes = 0; $landings = 0;
+        $views    = 0; $starts = 0; $completes = 0;
         $step_cnts = [];
         if ( $ev_exists ) {
             $views     = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT session_id) FROM {$ev_table} WHERE event_type='view'  AND {$ev_where}" );
             $starts    = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT session_id) FROM {$ev_table} WHERE event_type='start' AND {$ev_where}" );
             $completes = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT session_id) FROM {$ev_table} WHERE event_type='complete' AND {$ev_where}" );
-            /* Landing events happen on the marketing pages, not the form page, so
-               they always use the date-only WHERE — a form-page filter would
-               otherwise wrongly zero this row. */
-            $landings  = (int) $wpdb->get_var( "SELECT COUNT(DISTINCT session_id) FROM {$ev_table} WHERE event_type='landing' AND {$an_where}" );
             $rows      = $wpdb->get_results( "SELECT step_key, COUNT(DISTINCT session_id) AS cnt FROM {$ev_table} WHERE event_type='step' AND {$ev_where} AND step_key<>'' GROUP BY step_key", ARRAY_A );
             foreach ( $rows as $r ) $step_cnts[ $r['step_key'] ] = (int) $r['cnt'];
         }
-        $landing_configured = ! empty( array_filter( (array) get_option( 'as_landing_pages', [] ) ) );
 
         /* Submitted: entries table site-wide; complete events when a single
            landing page is selected. */
@@ -188,12 +183,10 @@ function as_render_analytics_tab() {
             <div style="font-size:15px;font-weight:700;color:#ee7a00;margin-bottom:3px;">Funnel — Vehicle Shipping Quote</div>
             <div style="font-size:11.5px;color:#9ca3af;margin-bottom:16px;">How each visitor moves from reaching the page to submitting the form. <?= esc_html( $range['label'] ) ?>.<?= $page_f !== '' ? ' Filtered to ' . esc_html( $page_f ) . '.' : '' ?></div>
             <?php
-            $funnel_rows = [];
-            if ( $landing_configured ) {
-                $funnel_rows[] = [ 'lbl' => 'Marketing page visit (came from landing page)', 'cnt' => $landings ];
-            }
-            $funnel_rows[] = [ 'lbl' => 'Reached the vehicle shipping quote page', 'cnt' => $views ];
-            $funnel_rows[] = [ 'lbl' => 'Started the form (first interaction)',   'cnt' => $starts ];
+            $funnel_rows = [
+                [ 'lbl' => 'Reached the vehicle shipping quote page', 'cnt' => $views ],
+                [ 'lbl' => 'Started the form (first interaction)',   'cnt' => $starts ],
+            ];
             foreach ( $canon as $key => $lbl ) {
                 $funnel_rows[] = [ 'lbl' => $lbl, 'cnt' => $step_cnts[ $key ] ?? 0 ];
             }
