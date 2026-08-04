@@ -32,16 +32,12 @@ $cities = [
 
   <div class="as-card">
 
+    <!-- Step counter -->
+    <div class="as-step-counter">Step <span class="as-step-cur">1</span> of 3</div>
+
     <!-- Progress bar -->
     <div class="as-prog-track">
       <div class="as-prog-fill" style="width:33.33%"></div>
-    </div>
-
-    <!-- Step tabs -->
-    <div class="as-step-tabs">
-      <div class="as-tab active" data-tab="1"><div class="as-tab-num">1</div> <span class="as-tab-label">Shipping Details</span></div>
-      <div class="as-tab" data-tab="2"><div class="as-tab-num">2</div> <span class="as-tab-label">Vehicle Details</span></div>
-      <div class="as-tab" data-tab="3"><div class="as-tab-num">3</div> <span class="as-tab-label">Get Quote</span></div>
     </div>
 
     <div class="as-body">
@@ -49,7 +45,6 @@ $cities = [
       <!-- ── Step 1: Shipping Details ── -->
       <div class="as-step active" data-step="1">
         <div class="as-step-heading">
-          <div class="as-step-icon"><i class="fa-solid fa-route"></i></div>
           <div>
             <div class="as-step-title">Enter Shipping Details</div>
             <div class="as-step-sub">Tell us where and how you'd like your vehicle moved</div>
@@ -131,7 +126,6 @@ $cities = [
       <!-- ── Step 2: Vehicle Details ── -->
       <div class="as-step" data-step="2">
         <div class="as-step-heading">
-          <div class="as-step-icon"><i class="fa-solid fa-car"></i></div>
           <div>
             <div class="as-step-title">Enter Vehicle Details</div>
             <div class="as-step-sub">Help us classify your vehicle for accurate pricing</div>
@@ -196,7 +190,6 @@ $cities = [
       <!-- ── Step 3: Contact ── -->
       <div class="as-step" data-step="3">
         <div class="as-step-heading">
-          <div class="as-step-icon"><i class="fa-solid fa-envelope"></i></div>
           <div>
             <div class="as-step-title">Get Quote Emailed &amp; Texted</div>
             <div class="as-step-sub">We'll send your personalised quote right away</div>

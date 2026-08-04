@@ -34,8 +34,8 @@
       this.uid      = wrap.id;
 
       this.progFill = wrap.querySelector( '.as-prog-fill' );
-      this.tabs     = wrap.querySelectorAll( '.as-tab' );
-      this.stepTabs = wrap.querySelector( '.as-step-tabs' );
+      this.counter  = wrap.querySelector( '.as-step-counter' );
+      this.counterN = wrap.querySelector( '.as-step-cur' );
       this.trust    = wrap.querySelector( '.as-trust' );
 
       this._bind();
@@ -109,24 +109,13 @@
         this.progFill.style.width = pct + '%';
       }
 
-      /* tabs */
-      this.tabs.forEach( tab => {
-        const n   = parseInt( tab.dataset.tab, 10 );
-        const num = tab.querySelector( '.as-tab-num' );
-        tab.classList.remove( 'active', 'done' );
-        if ( n === this.current )      tab.classList.add( 'active' );
-        else if ( n < this.current )   tab.classList.add( 'done' );
-        if ( num ) {
-          num.innerHTML = n < this.current
-            ? '<i class="fa-solid fa-check" style="font-size:9px"></i>'
-            : String( n );
-        }
-      } );
+      /* step counter ("Step 2 of 3") */
+      if ( this.counterN && ! isSuccess ) this.counterN.textContent = String( this.current );
 
       /* hide chrome on success */
       if ( isSuccess ) {
-        if ( this.stepTabs ) this.stepTabs.style.display = 'none';
-        if ( this.trust )    this.trust.style.display    = 'none';
+        if ( this.counter ) this.counter.style.display = 'none';
+        if ( this.trust )   this.trust.style.display   = 'none';
       }
     }
 
