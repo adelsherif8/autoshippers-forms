@@ -190,6 +190,13 @@
   color: #4b5563;
   line-height: 1.3;
 }
+/* Step 3 (Get Quote) keeps the prominent heading — the contact ask should stand out */
+.as-step[data-step="3"] .as-step-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
 .as-step-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
 /* ── Section label ────────────────────────────────────────── */
@@ -576,6 +583,7 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator {
   /* Tighter step heading + rhythm so each step fits the screen */
   .as-step-heading { margin-bottom: 16px; }
   .as-step-title { font-size: 14px; }
+  .as-step[data-step="3"] .as-step-title { font-size: 18px; }
   .as-step-counter { padding: 11px 14px; font-size: 13px; }
   .as-divider { margin: 16px 0; }
 
