@@ -9,7 +9,9 @@
   width: 100%;
   max-width: 620px;
   margin: 0 auto;
-  padding: 40px 20px;
+  /* Space for the full-width panel drawn by ::before below. */
+  position: relative;
+  padding: 24px 20px 36px;
   --bg:             #f2f4f7;
   --surface:        #ffffff;
   --surface-2:      #f8f9fb;
@@ -33,6 +35,30 @@
   --ease:           0.18s ease;
   --shadow-lg:      0 20px 60px rgba(0,0,0,0.10);
   color: var(--text);
+}
+
+/* The panel behind the card. Without it a white card on a white page has
+   nothing to read as an edge, and the form stops looking like a form. It is
+   drawn full-bleed with the same 100vw trick the hero uses, so it reads as a
+   section of the page rather than a grey stripe around the card. */
+.as-wrapper:not(.as-wrapper-compact)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100vw;
+  background: #eef1f6;
+}
+.as-wrapper > * { position: relative; }
+
+/* The embed shortcode can sit inside any column, so its panel stays inside the
+   wrapper instead of bleeding across the page. */
+.as-wrapper-compact {
+  background: #eef1f6;
+  border-radius: var(--radius);
+  padding: 20px 16px 24px;
 }
 
 /* ── Hero banner ──────────────────────────────────────────── */
@@ -138,9 +164,9 @@
 .as-card {
   background: var(--surface);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 6px 20px rgba(16,24,40,0.10);
   overflow: clip; /* clip = clips visually but doesn't block child scroll containers */
-  border: 1px solid var(--border);
+  border: 2px solid #c9d2df;
 }
 
 /* ── Progress ─────────────────────────────────────────────── */
@@ -159,6 +185,8 @@
   font-weight: 600;
   color: var(--text);
   letter-spacing: 0.01em;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
 }
 
 /* ── Body ─────────────────────────────────────────────────── */
@@ -573,11 +601,12 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator {
 
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 560px) {
-  /* Full-bleed on mobile: the card uses the whole width, no floating gutter */
-  .as-wrapper { padding: 0 0 20px; max-width: 100%; }
+  /* Keep the card framed on mobile too — it used to go full-bleed and
+     borderless, which left no visible edge at all on a white page. */
+  .as-wrapper { padding: 14px 12px 20px; max-width: 100%; }
   .as-logo { margin: 14px 0 14px; }
   .as-logo img { height: 52px; }
-  .as-card { border-radius: 0; border-left: none; border-right: none; box-shadow: none; }
+  .as-card { border-radius: 14px; }
   .as-body { padding: 20px 16px 22px; }
 
   /* Tighter step heading + rhythm so each step fits the screen */

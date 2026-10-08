@@ -48,7 +48,7 @@ add_action( 'plugins_loaded',       [ 'AS_Events', 'maybe_create_table' ] );
      trust="true|false"    — Fully Insured / Fast Response strip
      contact="true|false"  — Phone / Email / Address cards below the form
 
-   [as_vehicle_quote]                             — everything on
+   [as_vehicle_quote]                             — hero + form + trust + contact
    [as_vehicle_quote hero="false"]                — full page minus hero
    [as_vehicle_quote_embed]                       — just the form card
    [as_vehicle_quote_embed logo="true"]           — form card + logo above it */
@@ -56,7 +56,8 @@ add_shortcode( 'as_vehicle_quote',        'as_shortcode_vehicle_quote' );
 add_shortcode( 'as_vehicle_quote_embed',  'as_shortcode_vehicle_quote_embed' );
 
 function as_shortcode_vehicle_quote( $atts ) {
-    return as_render_vehicle_quote( $atts, [ 'hero' => 1, 'logo' => 1, 'trust' => 1, 'contact' => 1 ] );
+    /* logo off: the site header already shows it, and it pushed the form down */
+    return as_render_vehicle_quote( $atts, [ 'hero' => 1, 'logo' => 0, 'trust' => 1, 'contact' => 1 ] );
 }
 function as_shortcode_vehicle_quote_embed( $atts ) {
     return as_render_vehicle_quote( $atts, [ 'hero' => 0, 'logo' => 0, 'trust' => 0, 'contact' => 0 ] );
