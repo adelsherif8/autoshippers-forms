@@ -289,6 +289,14 @@ class AS_Form_Handler {
             ? $p['to_other']
             : $p['to_city'];
 
+        /* "How did you find us?" — keep the typed answer but keep it labelled,
+           so "Other" stays countable alongside Google / Word of Mouth / Social. */
+        $referral = $p['referral_source'];
+        if ( $referral === 'Other' && $p['referral_other'] !== '' ) {
+            $referral = 'Other — ' . $p['referral_other'];
+        }
+        $is_dealer = $p['is_dealer'] !== '' ? 'Yes' : 'No';
+
         /* Build custom fields. UTMs come from the canonical scad_tracking_params
            keys (utmcampaign_custom, utmmedium_custom, …). We still write to the
            existing utm_medium / utm_campaign / utm_content / utm_keyword admin
@@ -300,6 +308,11 @@ class AS_Form_Handler {
             'as_cf_to_city'           => $to,
             'as_cf_vehicle_type'      => $p['vehicle_type'],
             'as_cf_vehicle_status'    => $p['vehicle_status'],
+            'as_cf_vehicle_year'      => $p['vehicle_year'],
+            'as_cf_vehicle_make'      => $p['vehicle_make'],
+            'as_cf_vehicle_model'     => $p['vehicle_model'],
+            'as_cf_referral_source'   => $referral,
+            'as_cf_is_dealer'         => $is_dealer,
             'as_cf_utm_campaign' => $p['utmcampaign_custom'],
             'as_cf_utm_medium'   => $p['utmmedium_custom'],
             'as_cf_utm_content'  => $p['utmcontent_custom'],
@@ -319,6 +332,15 @@ class AS_Form_Handler {
             'tags'      => [ 'AutoShippers - Vehicle Quote' ],
         ];
 
+        /* Dealers get their own tag so they can be routed in GHL, and the
+           company name goes to GHL's built-in field — no mapping needed. */
+        if ( $is_dealer === 'Yes' ) {
+            $payload['tags'][] = 'AutoShippers - Dealer';
+            if ( $p['company_name'] !== '' ) {
+                $payload['companyName'] = $p['company_name'];
+            }
+        }
+
         if ( ! empty( $custom_fields ) ) {
             $payload['customFields'] = $custom_fields;
         }
@@ -331,6 +353,12 @@ class AS_Form_Handler {
             'to_city'        => $to,
             'vehicle_type'   => $p['vehicle_type'],
             'vehicle_status' => $p['vehicle_status'],
+            'vehicle_year'   => $p['vehicle_year'],
+            'vehicle_make'   => $p['vehicle_make'],
+            'vehicle_model'  => $p['vehicle_model'],
+            'referral_source' => $referral,
+            'is_dealer'      => $is_dealer,
+            'company_name'   => $p['company_name'],
         ];
         foreach ( [ 'utmcampaign_custom','utmmedium_custom','utmcontent_custom','utmkeyword_custom','utmterm_custom','gclid_custom' ] as $k ) {
             if ( ! empty( $p[ $k ] ) ) $entry_data[ $k ] = $p[ $k ];
@@ -429,6 +457,8 @@ class AS_Form_Handler {
         $keys = [
             'move_type', 'pickup_date', 'from_city', 'from_other',
             'to_city', 'to_other', 'vehicle_type', 'vehicle_status',
+            'vehicle_year', 'vehicle_make', 'vehicle_model',
+            'referral_source', 'referral_other', 'is_dealer', 'company_name',
             'first_name', 'last_name', 'email', 'phone',
             'utmcampaign_custom', 'utmmedium_custom', 'utmcontent_custom',
             'utmkeyword_custom',  'utmterm_custom',    'gclid_custom',

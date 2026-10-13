@@ -11,6 +11,8 @@ function as_save_settings(): void {
         'as_ghl_api_key', 'as_ghl_location_id',
         'as_cf_move_type', 'as_cf_pickup_date', 'as_cf_from_city',
         'as_cf_to_city',   'as_cf_vehicle_type', 'as_cf_vehicle_status',
+        'as_cf_vehicle_year', 'as_cf_vehicle_make', 'as_cf_vehicle_model',
+        'as_cf_referral_source', 'as_cf_is_dealer',
         'as_cf_utm_medium', 'as_cf_utm_campaign', 'as_cf_utm_content',
         'as_cf_utm_keyword', 'as_cf_utm_term',
         'as_cf_gclid', 'as_cf_latest_form_date',
@@ -135,6 +137,11 @@ function as_render_settings_page(): void {
                             $vehicle_fields = [
                                 'as_cf_vehicle_type'   => 'Vehicle Type',
                                 'as_cf_vehicle_status' => 'Vehicle Status',
+                                'as_cf_vehicle_year'   => 'Vehicle Year',
+                                'as_cf_vehicle_make'   => 'Vehicle Make',
+                                'as_cf_vehicle_model'  => 'Vehicle Model',
+                                'as_cf_referral_source'=> 'How Did You Find Us',
+                                'as_cf_is_dealer'      => 'Is Dealer',
                             ];
                             foreach ( $vehicle_fields as $opt => $label ) :
                             ?>

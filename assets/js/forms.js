@@ -187,8 +187,9 @@
         }
       }
 
-      /* required selects (From / To city) */
-      for ( const sel of step.querySelectorAll( 'select.as-select' ) ) {
+      /* required selects (From / To city). Selects marked data-optional
+         (e.g. "How did you find us?") may be left on the empty option. */
+      for ( const sel of step.querySelectorAll( 'select.as-select:not([data-optional])' ) ) {
         if ( ! sel.value ) {
           this._showError( 'Please select a city for both From and To.', sel );
           return false;
@@ -363,6 +364,14 @@
         const targetId = sel.dataset.otherTarget + '-' + this.uid;
         const panel    = document.getElementById( targetId );
         if ( panel ) panel.classList.toggle( 'visible', sel.value === 'Other' );
+      } );
+
+      /* Checkbox conditionals ("I am a dealer" → Company Name) */
+      this.wrap.addEventListener( 'change', e => {
+        const box = e.target.closest( 'input[type="checkbox"][data-toggle-target]' );
+        if ( ! box ) return;
+        const panel = document.getElementById( box.dataset.toggleTarget + '-' + this.uid );
+        if ( panel ) panel.classList.toggle( 'visible', box.checked );
       } );
     }
   }

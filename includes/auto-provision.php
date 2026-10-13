@@ -36,6 +36,11 @@ function as_ghl_field_definitions() {
         [ 'name' => 'To City',          'key' => 'to_city',          'option' => 'as_cf_to_city' ],
         [ 'name' => 'Vehicle Type',     'key' => 'vehicle_type',     'option' => 'as_cf_vehicle_type' ],
         [ 'name' => 'Vehicle Status',   'key' => 'vehicle_status',   'option' => 'as_cf_vehicle_status' ],
+        [ 'name' => 'Vehicle Year',     'key' => 'vehicle_year',     'option' => 'as_cf_vehicle_year' ],
+        [ 'name' => 'Vehicle Make',     'key' => 'vehicle_make',     'option' => 'as_cf_vehicle_make' ],
+        [ 'name' => 'Vehicle Model',    'key' => 'vehicle_model',    'option' => 'as_cf_vehicle_model' ],
+        [ 'name' => 'How Did You Find Us', 'key' => 'how_did_you_find_us', 'option' => 'as_cf_referral_source' ],
+        [ 'name' => 'Is Dealer',        'key' => 'is_dealer',        'option' => 'as_cf_is_dealer' ],
         [ 'name' => 'Latest Form Date', 'key' => 'latest_form_date', 'option' => 'as_cf_latest_form_date' ],
     ];
     $utm_fields = [

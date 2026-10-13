@@ -63,6 +63,11 @@ function as_render_instructions_page(): void {
                                 <tr><td><strong>To City</strong></td><td>Text</td><td>Destination city; custom text if "Other" selected</td></tr>
                                 <tr><td><strong>Vehicle Type</strong></td><td>Text / Radio</td><td>Small, Medium, Large, X Large, XXL</td></tr>
                                 <tr><td><strong>Vehicle Status</strong></td><td>Text / Radio</td><td>Running &amp; Driving or Non Runner</td></tr>
+                                <tr><td><strong>Vehicle Year</strong></td><td>Text</td><td>e.g. 2018</td></tr>
+                                <tr><td><strong>Vehicle Make</strong></td><td>Text</td><td>e.g. Honda</td></tr>
+                                <tr><td><strong>Vehicle Model</strong></td><td>Text</td><td>e.g. Civic</td></tr>
+                                <tr><td><strong>How Did You Find Us</strong></td><td>Text</td><td>Google, Word of Mouth, Social Media or Other — typed answer</td></tr>
+                                <tr><td><strong>Is Dealer</strong></td><td>Text</td><td>Yes or No. Dealers also get the <strong>AutoShippers - Dealer</strong> tag, and the company name goes to GHL's built-in Company Name field.</td></tr>
                             </tbody>
                         </table>
 

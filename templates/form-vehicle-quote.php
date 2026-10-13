@@ -132,6 +132,24 @@ $cities = [
           </div>
         </div>
 
+        <div class="as-section-label" style="margin-bottom:12px">Year, Make &amp; Model <span class="as-required-star">*</span></div>
+        <div class="as-ymm-grid">
+          <div class="as-field">
+            <label class="as-label">Year</label>
+            <input type="text" class="as-input" name="vehicle_year" inputmode="numeric" placeholder="2018" required>
+          </div>
+          <div class="as-field">
+            <label class="as-label">Make</label>
+            <input type="text" class="as-input" name="vehicle_make" placeholder="Honda" required>
+          </div>
+          <div class="as-field">
+            <label class="as-label">Model</label>
+            <input type="text" class="as-input" name="vehicle_model" placeholder="Civic" required>
+          </div>
+        </div>
+
+        <div class="as-divider"></div>
+
         <div class="as-section-label" style="margin-bottom:12px">Vehicle Type <span class="as-required-star">*</span></div>
         <div class="as-size-choices">
           <?php
@@ -213,6 +231,38 @@ $cities = [
         <div class="as-field">
           <label class="as-label">Phone <span class="as-required-star">*</span></label>
           <input type="tel" class="as-input" name="phone" placeholder="+1 (416) 555-0100" required>
+        </div>
+
+        <div class="as-field">
+          <label class="as-label">How did you find us? <span class="as-optional">(optional)</span></label>
+          <select class="as-select" name="referral_source" data-optional="1" data-other-target="referral-other">
+            <option value="">Select an option</option>
+            <option>Google</option>
+            <option>Word of Mouth</option>
+            <option>Social Media</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="as-conditional" id="referral-other-<?php echo esc_attr( $uid ); ?>">
+          <div class="as-field">
+            <label class="as-label">Please specify</label>
+            <input type="text" class="as-input" name="referral_other" placeholder="How did you hear about us?">
+          </div>
+        </div>
+
+        <!-- Dealer: unticked by default, so a private seller never has to touch it -->
+        <label class="as-check">
+          <input type="checkbox" name="is_dealer" value="Yes" data-toggle-target="dealer-company">
+          <span class="as-check-box"><i class="fa-solid fa-check"></i></span>
+          <span class="as-check-label">I am a dealer</span>
+        </label>
+
+        <div class="as-conditional" id="dealer-company-<?php echo esc_attr( $uid ); ?>">
+          <div class="as-field">
+            <label class="as-label">Company Name</label>
+            <input type="text" class="as-input" name="company_name" placeholder="Your dealership">
+          </div>
         </div>
 
         <div class="as-actions" style="margin-top:20px">

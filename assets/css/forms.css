@@ -394,6 +394,38 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator {
 
 .as-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
+/* ── Year / Make / Model ──────────────────────────────────── */
+.as-ymm-grid { display: grid; grid-template-columns: 0.8fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.as-optional { font-weight: 400; color: var(--text-muted); }
+
+/* ── Checkbox ("I am a dealer") ───────────────────────────── */
+.as-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 14px;
+  cursor: pointer;
+  user-select: none;
+}
+.as-check input { position: absolute; opacity: 0; width: 0; height: 0; }
+.as-check-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  transition: var(--ease);
+}
+.as-check-box i { font-size: 12px; color: #fff; opacity: 0; transition: var(--ease); }
+.as-check input:checked + .as-check-box { background: var(--orange); border-color: var(--orange); }
+.as-check input:checked + .as-check-box i { opacity: 1; }
+.as-check input:focus-visible + .as-check-box { box-shadow: 0 0 0 3px var(--orange-dim); }
+.as-check-label { font-size: 14px; font-weight: 500; color: var(--text); }
+
 /* ── Conditional field ────────────────────────────────────── */
 .as-conditional { display: none; }
 .as-conditional.visible {
@@ -648,6 +680,7 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator {
 
   /* Contact row: first/last name stack */
   .as-row { grid-template-columns: 1fr; gap: 0; }
+  .as-ymm-grid { grid-template-columns: 1fr; gap: 0; }
 
   /* Buttons: stack vertically, full width */
   .as-actions { flex-direction: column; gap: 8px; }

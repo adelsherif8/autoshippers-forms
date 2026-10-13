@@ -223,6 +223,12 @@ function as_render_entry_detail( array $entry ): void {
         'to_city'           => 'To city',
         'vehicle_type'      => 'Vehicle type',
         'vehicle_status'    => 'Vehicle status',
+        'vehicle_year'      => 'Vehicle year',
+        'vehicle_make'      => 'Vehicle make',
+        'vehicle_model'     => 'Vehicle model',
+        'referral_source'   => 'How did you find us',
+        'is_dealer'         => 'Is dealer',
+        'company_name'      => 'Company name',
         'utmcampaign_custom'=> 'UTM Campaign',
         'utmmedium_custom'  => 'UTM Medium',
         'utmcontent_custom' => 'UTM Content',
@@ -288,7 +294,7 @@ function as_render_entry_detail( array $entry ): void {
             </div>
 
             <?php
-            $form_keys = [ 'move_type','pickup_date','from_city','to_city','vehicle_type','vehicle_status' ];
+            $form_keys = [ 'move_type','pickup_date','from_city','to_city','vehicle_type','vehicle_status','vehicle_year','vehicle_make','vehicle_model','referral_source','is_dealer','company_name' ];
             $has_form  = false;
             foreach ( $form_keys as $k ) { if ( ! empty( $data[ $k ] ) ) { $has_form = true; break; } }
             ?>
