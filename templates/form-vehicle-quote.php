@@ -15,9 +15,9 @@ $cities = [
 <?php if ( $show_hero ): ?>
 <!-- Hero banner -->
 <div class="as-hero">
-  <div class="as-hero-eyebrow">FREE QUOTE</div>
-  <h2 class="as-hero-title">Reserve within 24hrs &amp; save $100 more</h2>
-  <p class="as-hero-sub">Get your instant quote online and save an extra $100 if you reserve online. Cancel for free at any time before your car is loaded</p>
+  <div class="as-hero-eyebrow"><?php echo esc_html( as_hero_text( 'eyebrow' ) ); ?></div>
+  <h2 class="as-hero-title"><?php echo esc_html( as_hero_text( 'title' ) ); ?></h2>
+  <p class="as-hero-sub"><?php echo esc_html( as_hero_text( 'sub' ) ); ?></p>
 </div>
 <?php endif; ?>
 

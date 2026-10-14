@@ -26,6 +26,7 @@ require_once AS_DIR . 'includes/class-entries.php';
 require_once AS_DIR . 'includes/class-events.php';
 require_once AS_DIR . 'includes/class-form-handler.php';
 require_once AS_DIR . 'includes/auto-provision.php';
+require_once AS_DIR . 'includes/hero-text.php';
 
 new AS_Updater( AS_GITHUB_REPO, __FILE__, AS_VERSION );
 require_once AS_DIR . 'admin/admin-page.php';

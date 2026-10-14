@@ -23,7 +23,10 @@ function as_save_settings(): void {
         update_option( $opt, sanitize_text_field( $_POST[ $opt ] ?? '' ) );
     }
 
-    wp_redirect( admin_url( 'admin.php?page=as-settings&saved=1' ) );
+    /* Banner copy is saved separately so each edit can be logged */
+    $hero_changed = as_hero_save( $_POST );
+
+    wp_redirect( admin_url( 'admin.php?page=as-settings&saved=1' . ( $hero_changed ? '&banner=' . $hero_changed : '' ) ) );
     exit;
 }
 
@@ -39,13 +42,17 @@ function as_render_settings_page(): void {
         </h1>
 
         <?php if ( $saved ) : ?>
-            <div class="notice notice-success is-dismissible"><p>Settings saved.</p></div>
+            <div class="notice notice-success is-dismissible"><p>Settings saved.<?php
+                $n = intval( $_GET['banner'] ?? 0 );
+                if ( $n ) echo ' ' . esc_html( sprintf( _n( '%d banner line updated.', '%d banner lines updated.', $n, 'autoshippers-forms' ), $n ) );
+            ?></p></div>
         <?php endif; ?>
 
         <!-- Tabs -->
         <div class="as-tab-nav">
             <button class="as-tab-btn active" data-tab="connection">GHL Connection</button>
             <button class="as-tab-btn" data-tab="fields">Custom Fields</button>
+            <button class="as-tab-btn" data-tab="banner">Banner Text</button>
             <button class="as-tab-btn" data-tab="shortcodes">Shortcode</button>
         </div>
 
@@ -216,6 +223,10 @@ function as_render_settings_page(): void {
             </div>
 
             <!-- ── Tab: Shortcode ── -->
+            <div class="as-tab-panel" data-panel="banner">
+                <?php as_tab_banner(); ?>
+            </div>
+
             <div class="as-tab-panel" data-panel="shortcodes">
                 <div class="as-section">
                     <h2>Shortcode</h2>
@@ -233,6 +244,74 @@ function as_render_settings_page(): void {
             </div>
 
         </form>
+    </div>
+    <?php
+}
+
+/* ── TAB: Banner Text ──
+   The copy in the black banner above the form, plus the change log. */
+function as_tab_banner(): void {
+    $slots   = as_hero_slots();
+    $history = as_hero_history();
+    $last    = as_hero_last_change_summary();
+    ?>
+    <div class="as-section">
+        <h2>Banner Text</h2>
+        <p style="font-size:13px;color:#555;margin-bottom:6px">
+            The black banner above the quote form. Clear a box and save to put the original wording back.
+        </p>
+        <p style="font-size:13px;color:#555;margin-bottom:18px">
+            <strong>Last change:</strong>
+            <?php echo $last !== '' ? esc_html( $last ) : 'never edited — still the original wording'; ?>
+        </p>
+
+        <table class="as-cf-table widefat">
+            <thead><tr><th style="width:160px">Line</th><th>Text</th></tr></thead>
+            <tbody>
+            <?php foreach ( $slots as $slot => [ $label, $default ] ) :
+                $value   = as_hero_text( $slot );
+                $is_def  = $value === $default;
+                $rows    = $slot === 'sub' ? 3 : 2;
+            ?>
+                <tr>
+                    <td>
+                        <strong><?php echo esc_html( $label ); ?></strong>
+                        <?php if ( $is_def ) : ?>
+                            <br><span style="font-size:11px;color:#9ca3af">original wording</span>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <textarea name="<?php echo esc_attr( as_hero_option( $slot ) ); ?>"
+                                  rows="<?php echo intval( $rows ); ?>"
+                                  style="width:100%;font-size:13px"><?php echo esc_textarea( $value ); ?></textarea>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <h3 style="margin-top:26px">Change log</h3>
+        <?php if ( empty( $history ) ) : ?>
+            <p style="font-size:13px;color:#777">Nothing has been changed yet. Every edit will be listed here with the old and new wording.</p>
+        <?php else : ?>
+        <table class="as-cf-table widefat">
+            <thead><tr><th style="width:150px">When</th><th style="width:120px">Line</th><th>Changed from → to</th><th style="width:120px">By</th></tr></thead>
+            <tbody>
+            <?php foreach ( $history as $h ) : ?>
+                <tr>
+                    <td><?php echo esc_html( mysql2date( 'j M Y, g:ia', $h['time'] ) ); ?></td>
+                    <td><?php echo esc_html( $h['label'] ); ?></td>
+                    <td style="font-size:12px;line-height:1.6">
+                        <span style="color:#b91c1c;text-decoration:line-through"><?php echo esc_html( $h['from'] ); ?></span><br>
+                        <span style="color:#15803d"><?php echo esc_html( $h['to'] ); ?></span>
+                    </td>
+                    <td><?php echo esc_html( $h['user'] ); ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+        <p style="font-size:12px;color:#9ca3af;margin-top:8px">The last 30 changes are kept.</p>
+        <?php endif; ?>
     </div>
     <?php
 }
