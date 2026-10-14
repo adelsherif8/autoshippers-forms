@@ -225,6 +225,10 @@ function as_render_settings_page(): void {
             <!-- ── Tab: Shortcode ── -->
             <div class="as-tab-panel" data-panel="banner">
                 <?php as_tab_banner(); ?>
+
+                <div class="as-save-row">
+                    <?php submit_button( 'Save Banner Text', 'primary', 'submit', false ); ?>
+                </div>
             </div>
 
             <div class="as-tab-panel" data-panel="shortcodes">
