@@ -7,6 +7,11 @@ if ( ! defined( 'ABSPATH' ) ) exit;
    admin_init, creates any missing folders + fields in the subaccount
    and force-moves fields into the right folder. Skips silently while
    credentials are missing so it retries on the next admin visit.
+
+   The "once" is keyed to the field list itself, not a fixed flag: adding a
+   field in a later release changes the signature and provisioning runs again
+   on the next admin page load. A fixed flag meant fields added after the
+   first run were never created, and submissions dropped them silently.
    ═══════════════════════════════════════════════════════════════ */
 
 function as_ghl_clean_key( $api_key ) {
@@ -68,7 +73,10 @@ function as_get_folder_ids( $location_id ) {
 add_action( 'admin_init', 'as_auto_provision_all_fields' );
 function as_auto_provision_all_fields() {
     if ( ! current_user_can( 'manage_options' ) ) return;
-    if ( get_option( 'as_auto_provision_fields_v1' ) === '1' ) return;
+
+    /* Signature of the current field list — re-runs whenever it changes. */
+    $sig = md5( wp_json_encode( as_ghl_field_definitions() ) );
+    if ( get_option( 'as_auto_provision_sig' ) === $sig ) return;
 
     $api_key     = as_ghl_clean_key( (string) get_option( 'as_ghl_api_key', '' ) );
     $location_id = trim( (string) get_option( 'as_ghl_location_id', '' ) );
@@ -81,7 +89,7 @@ function as_auto_provision_all_fields() {
     $r = wp_remote_get( "{$base}/locations/{$location_id}/customFields", [ 'headers' => $headers, 'timeout' => 15 ] );
     if ( is_wp_error( $r ) ) return;
     $code = wp_remote_retrieve_response_code( $r );
-    if ( $code === 401 || $code === 403 ) { update_option( 'as_auto_provision_fields_v1', '1' ); return; } // bad token — don't spam
+    if ( $code === 401 || $code === 403 ) { update_option( 'as_auto_provision_sig', $sig ); return; } // bad token — don't spam
     if ( $code < 200 || $code >= 300 ) return;
     $existing = [];
     foreach ( json_decode( wp_remote_retrieve_body( $r ), true )['customFields'] ?? [] as $f ) {
@@ -168,5 +176,5 @@ function as_auto_provision_all_fields() {
         update_option( 'as_folder_ids_' . md5( $location_id ), $stored );
     }
 
-    update_option( 'as_auto_provision_fields_v1', '1' );
+    update_option( 'as_auto_provision_sig', $sig );
 }
