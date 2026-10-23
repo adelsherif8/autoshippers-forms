@@ -24,6 +24,7 @@ require_once AS_DIR . 'includes/class-updater.php';
 require_once AS_DIR . 'includes/class-ghl-api.php';
 require_once AS_DIR . 'includes/class-entries.php';
 require_once AS_DIR . 'includes/class-events.php';
+require_once AS_DIR . 'includes/class-partials.php';
 require_once AS_DIR . 'includes/class-form-handler.php';
 require_once AS_DIR . 'includes/auto-provision.php';
 require_once AS_DIR . 'includes/hero-text.php';
@@ -31,6 +32,7 @@ require_once AS_DIR . 'includes/hero-text.php';
 new AS_Updater( AS_GITHUB_REPO, __FILE__, AS_VERSION );
 require_once AS_DIR . 'admin/admin-page.php';
 require_once AS_DIR . 'admin/entries-page.php';
+require_once AS_DIR . 'admin/partials-page.php';
 require_once AS_DIR . 'admin/analytics-page.php';
 require_once AS_DIR . 'admin/instructions-page.php';
 
@@ -38,7 +40,9 @@ require_once AS_DIR . 'admin/instructions-page.php';
 register_activation_hook( __FILE__, [ 'AS_Entries', 'maybe_create_table' ] );
 add_action( 'plugins_loaded',       [ 'AS_Entries', 'maybe_create_table' ] );
 register_activation_hook( __FILE__, [ 'AS_Events', 'maybe_create_table' ] );
+register_activation_hook( __FILE__, [ 'AS_Partials', 'maybe_create_table' ] );
 add_action( 'plugins_loaded',       [ 'AS_Events', 'maybe_create_table' ] );
+add_action( 'plugins_loaded',       [ 'AS_Partials', 'maybe_create_table' ] );
 
 /* ── Shortcodes ─────────────────────────────────────────────
    Both shortcodes share the same template and JS. They only differ
@@ -146,6 +150,7 @@ function as_register_admin_menu() {
     add_submenu_page( 'as-settings', 'Settings',     'Settings',     'manage_options', 'as-settings',     'as_render_settings_page' );
     add_submenu_page( 'as-settings', 'Entries',      'Entries',      'manage_options', 'as-entries',      'as_render_entries_page' );
     add_submenu_page( 'as-settings', 'Analytics',    'Analytics',    'manage_options', 'as-analytics',    'as_render_analytics_tab' );
+    add_submenu_page( 'as-settings', 'Unfinished',   'Unfinished',   'manage_options', 'as-partials',     'as_render_partials_page' );
     add_submenu_page( 'as-settings', 'Instructions', 'Instructions', 'manage_options', 'as-instructions', 'as_render_instructions_page' );
 }
 

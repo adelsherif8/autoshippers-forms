@@ -26,6 +26,43 @@
   /* Step number → step_key used by the analytics funnel */
   var AS_STEP_KEYS = { 1: 'shipping', 2: 'vehicle', 3: 'contact' };
 
+  /* ── Unfinished fills ──
+     Keeps what has been typed so the admin can see which step loses people.
+     Stored on this site only — it is never sent to the CRM and is not a lead.
+     Saves on blur and on leaving the page, not on every keystroke. */
+  var AS_PARTIAL_KEYS = [
+    'move_type', 'pickup_date', 'from_city', 'from_other', 'to_city', 'to_other',
+    'vehicle_year', 'vehicle_make', 'vehicle_model', 'vehicle_type', 'vehicle_status',
+    'referral_source', 'referral_other', 'is_dealer', 'company_name',
+    'first_name', 'last_name', 'email', 'phone'
+  ];
+  function asSavePartial( wrap, stepKey, useBeacon ) {
+    try {
+      if ( wrap.dataset.asDone === '1' ) return;   /* already submitted */
+      var fd = new FormData();
+      fd.append( 'action',     'as_partial' );
+      fd.append( 'session_id', _asSid );
+      fd.append( 'step_key',   stepKey || '' );
+      fd.append( 'page_url',   window.location.origin + window.location.pathname );
+      var filled = false;
+      wrap.querySelectorAll( 'input, select, textarea' ).forEach( function ( el ) {
+        if ( ! el.name || AS_PARTIAL_KEYS.indexOf( el.name ) === -1 ) return;
+        var v = ( el.type === 'radio' || el.type === 'checkbox' )
+          ? ( el.checked ? el.value : '' )
+          : ( el.dataset.dateVal || el.value );
+        if ( ! v ) return;
+        fd.append( el.name, v );
+        filled = true;
+      } );
+      if ( ! filled ) return;   /* nothing typed yet — nothing worth storing */
+      if ( useBeacon && navigator.sendBeacon ) {
+        navigator.sendBeacon( asData.ajaxUrl, fd );
+      } else {
+        fetch( asData.ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin', keepalive: true } ).catch( function () {} );
+      }
+    } catch ( e ) {}
+  }
+
   class AsForm {
     constructor( wrap ) {
       this.wrap     = wrap;
@@ -123,6 +160,7 @@
     next() {
       if ( ! this._validate() ) return;
       if ( this.current < this.total ) {
+        asSavePartial( this.wrap, AS_STEP_KEYS[ this.current ] || '' );
         this.current++;
         asTrack( 'step', AS_STEP_KEYS[ this.current ] || '' );
         this._refresh();
@@ -298,6 +336,7 @@
         const data = new FormData();
         data.append( 'action', 'as_submit' );
         data.append( 'nonce',  nonce );
+        data.append( 'session_id', _asSid );
 
         this.wrap.querySelectorAll( 'input, select, textarea' ).forEach( el => {
           if ( ! el.name ) return;
@@ -319,6 +358,7 @@
         .then( res => {
           if ( res.success ) {
             asTrack( 'complete', '' );
+            this.wrap.dataset.asDone = '1';   /* stop the unfinished-fill saver */
             this.current = this.total + 1;
             this._refresh();
           } else {
@@ -356,6 +396,22 @@
       };
       this.wrap.addEventListener( 'input',  forgive );
       this.wrap.addEventListener( 'change', forgive );
+
+      /* Keep the unfinished fill up to date: when a field is left, and once
+         more if they close or hide the page part-way through. */
+      const stepKey = () => AS_STEP_KEYS[ this.current ] || '';
+      this.wrap.addEventListener( 'focusout', () => {
+        clearTimeout( this._partialT );
+        this._partialT = setTimeout( () => asSavePartial( this.wrap, stepKey() ), 400 );
+      } );
+      this.wrap.addEventListener( 'change', () => {
+        clearTimeout( this._partialT );
+        this._partialT = setTimeout( () => asSavePartial( this.wrap, stepKey() ), 400 );
+      } );
+      document.addEventListener( 'visibilitychange', () => {
+        if ( document.visibilityState === 'hidden' ) asSavePartial( this.wrap, stepKey(), true );
+      } );
+      window.addEventListener( 'pagehide', () => asSavePartial( this.wrap, stepKey(), true ) );
 
       /* "Other" city conditionals */
       this.wrap.addEventListener( 'change', e => {

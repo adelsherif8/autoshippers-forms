@@ -16,6 +16,9 @@ class AS_Form_Handler {
         /* Funnel analytics events (view / step / submit) */
         add_action( 'wp_ajax_as_track',             [ $this, 'handle_track' ] );
         add_action( 'wp_ajax_nopriv_as_track',      [ $this, 'handle_track' ] );
+        /* Unfinished fills — stored locally only, never sent to the CRM */
+        add_action( 'wp_ajax_as_partial',           [ $this, 'handle_partial' ] );
+        add_action( 'wp_ajax_nopriv_as_partial',    [ $this, 'handle_partial' ] );
     }
 
     /* ── Analytics: record a view / start / step / complete milestone ── */
@@ -31,6 +34,29 @@ class AS_Form_Handler {
             return;
         }
         AS_Events::insert( $event_type, $step_key, $session_id, $page_url );
+        wp_send_json_success();
+    }
+
+    /* ── Unfinished fill: keep what has been typed so far ──
+       Internal only. Nothing here reaches GoHighLevel and nothing here is
+       treated as a lead — see AS_Partials. */
+    public function handle_partial(): void {
+        nocache_headers();
+        $session_id = sanitize_text_field( $_POST['session_id'] ?? '' );
+        $step_key   = sanitize_text_field( $_POST['step_key']   ?? '' );
+        $page_url   = esc_url_raw( $_POST['page_url'] ?? '' );
+        if ( $session_id === '' ) {
+            wp_send_json_error();
+            return;
+        }
+        $fields = [];
+        foreach ( AS_Partials::allowed_keys() as $k ) {
+            if ( ! isset( $_POST[ $k ] ) ) continue;
+            $fields[ $k ] = $k === 'email'
+                ? sanitize_email( $_POST[ $k ] )
+                : sanitize_text_field( $_POST[ $k ] );
+        }
+        AS_Partials::save( $session_id, $step_key, $fields, $page_url );
         wp_send_json_success();
     }
 
@@ -373,6 +399,9 @@ class AS_Form_Handler {
             'data'       => $entry_data,
             'ip'         => $this->get_ip(),
         ] );
+
+        /* They finished: this fill is no longer an abandonment. */
+        AS_Partials::mark_completed( sanitize_text_field( $_POST['session_id'] ?? '' ) );
 
         $api    = new AS_GHL_API();
         $result = $api->upsert_contact( $payload );
