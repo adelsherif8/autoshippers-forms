@@ -95,6 +95,11 @@ function as_render_analytics_tab() {
         .as-an-tile.hi .num{color:#ee7a00;}
         .as-src-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
         .as-src-row .lbl{width:340px;flex-shrink:0;font-size:12.5px;color:#374151;line-height:1.4;}
+        .as-src-row .lbl small{display:block;font-size:11px;color:#9ca3af;margin-top:1px;}
+        .as-src-row .lbl small .lost{color:#dc2626;font-weight:600;}
+        .as-src-row .lbl .worst{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;background:#fee2e2;color:#b91c1c;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;vertical-align:1px;}
+        .as-src-row .pct{font-size:12px;font-weight:600;color:#64748b;width:52px;text-align:right;flex-shrink:0;}
+        .as-src-row.is-zero .pct{color:#cbd5e1;}
         .as-src-row .bar{flex:1;background:#f3f4f6;border-radius:6px;height:10px;overflow:hidden;}
         .as-src-row .fill{height:100%;border-radius:6px;background:#ee7a00;transition:width .3s;}
         .as-src-row .cnt{font-size:13px;font-weight:600;color:#1d2327;width:36px;text-align:right;flex-shrink:0;}
@@ -192,17 +197,48 @@ function as_render_analytics_tab() {
             }
             $funnel_rows[] = [ 'lbl' => 'Submitted form (became a lead)', 'cnt' => $submitted ];
             $fmax = max( 1, max( array_column( $funnel_rows, 'cnt' ) ) );
-            foreach ( $funnel_rows as $row ):
+
+            /* Step-to-step conversion: what share of the previous step carried on,
+               and how many were lost there. The biggest loss is flagged, since
+               that is the step worth rewriting. */
+            $top   = (int) ( $funnel_rows[0]['cnt'] ?? 0 );
+            $worst = -1; $worst_lost = 0;
+            foreach ( $funnel_rows as $i => $row ) {
+                $cnt  = (int) $row['cnt'];
+                $prev = $i === 0 ? $cnt : (int) $funnel_rows[ $i - 1 ]['cnt'];
+                $funnel_rows[ $i ]['of_prev'] = $prev > 0 ? round( $cnt / $prev * 100 ) : 0;
+                $funnel_rows[ $i ]['of_top']  = $top  > 0 ? round( $cnt / $top  * 100 ) : 0;
+                $funnel_rows[ $i ]['lost']    = $i === 0 ? 0 : max( 0, $prev - $cnt );
+                if ( $i > 0 && $funnel_rows[ $i ]['lost'] > $worst_lost ) {
+                    $worst_lost = $funnel_rows[ $i ]['lost'];
+                    $worst      = $i;
+                }
+            }
+
+            foreach ( $funnel_rows as $i => $row ):
                 $cnt  = (int) $row['cnt'];
                 $pct  = round( $cnt / $fmax * 100 );
                 $zero = $cnt === 0;
             ?>
             <div class="as-src-row <?= $zero ? 'is-zero' : '' ?>">
-                <span class="lbl"><?= esc_html( $row['lbl'] ) ?></span>
+                <span class="lbl">
+                    <?= esc_html( $row['lbl'] ) ?>
+                    <?php if ( $i === $worst ): ?><span class="worst">biggest drop-off</span><?php endif; ?>
+                    <?php if ( $i > 0 ): ?>
+                        <small>
+                            <?= (int) $row['of_prev'] ?>% carried on from the step above<?php
+                            if ( $row['lost'] > 0 ) : ?> · <span class="lost">&minus;<?= (int) $row['lost'] ?> left here</span><?php endif; ?>
+                        </small>
+                    <?php endif; ?>
+                </span>
                 <div class="bar"><div class="fill" style="width:<?= max( $pct, 2 ) ?>%;"></div></div>
                 <span class="cnt"><?= $cnt ?></span>
+                <span class="pct"><?= (int) $row['of_top'] ?>%</span>
             </div>
             <?php endforeach; ?>
+            <div style="font-size:11px;color:#9ca3af;margin-top:10px;">
+                The right-hand figure is the share of everyone who reached the page. The grey line under each step is how many of the previous step carried on.
+            </div>
         </div>
 
         <!-- Daily submissions -->
