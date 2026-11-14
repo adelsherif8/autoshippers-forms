@@ -59,7 +59,7 @@ function as_render_analytics_tab() {
         $tracked_pages  = [];
         if ( $wpdb->get_var( "SHOW TABLES LIKE '{$ev_table_early}'" ) === $ev_table_early ) {
             $tracked_pages = $wpdb->get_col( $wpdb->prepare(
-                "SELECT DISTINCT page_url FROM {$ev_table_early} WHERE page_url<>'' AND DATE(created_at) BETWEEN %s AND %s ORDER BY page_url",
+                "SELECT DISTINCT page_url FROM {$ev_table_early} WHERE page_url<>'' AND event_type<>'call' AND DATE(created_at) BETWEEN %s AND %s ORDER BY page_url",
                 $range['from'], $range['to']
             ) ) ?: [];
         }

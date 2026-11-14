@@ -120,6 +120,7 @@ function as_enqueue_frontend() {
         'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
         'nonce'     => wp_create_nonce( 'as_submit' ),
         'itiUtils'  => $iti . 'js/utils.js',
+        'pageId'    => (int) get_queried_object_id(),
     ] );
 }
 

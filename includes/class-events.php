@@ -6,8 +6,11 @@ if ( ! defined( 'ABSPATH' ) ) exit;
    (COUNT DISTINCT session_id), never at insert time. */
 class AS_Events {
 
-    const DB_VERSION = '1.1'; /* 1.1: added page_url so analytics can filter by landing page */
+    const DB_VERSION = '1.2'; /* 1.1: page_url for the landing-page filter. 1.2: page_id + 'call' (tel: click) events */
     const OPTION_KEY = 'as_events_db_version';
+
+    /* 'call' = a click on any tel: link on the site; step_key holds the number. */
+    const TYPES = [ 'view', 'start', 'step', 'complete', 'call' ];
 
     public static function table_name(): string {
         global $wpdb;
@@ -31,6 +34,7 @@ class AS_Events {
             step_key    VARCHAR(100) NOT NULL DEFAULT '',
             session_id  VARCHAR(64)  NOT NULL DEFAULT '',
             page_url    VARCHAR(500) NOT NULL DEFAULT '',
+            page_id     BIGINT UNSIGNED NOT NULL DEFAULT 0,
             created_at  DATETIME     NOT NULL,
             PRIMARY KEY (id),
             KEY idx_created (created_at),
@@ -42,8 +46,9 @@ class AS_Events {
         update_option( self::OPTION_KEY, self::DB_VERSION );
     }
 
-    public static function insert( string $event_type, string $step_key, string $session_id, string $page_url = '' ): void {
+    public static function insert( string $event_type, string $step_key, string $session_id, string $page_url = '', int $page_id = 0 ): void {
         global $wpdb;
+        if ( ! in_array( $event_type, self::TYPES, true ) ) return;
         if ( get_option( self::OPTION_KEY ) !== self::DB_VERSION ) {
             self::create_table();
         }
@@ -52,6 +57,7 @@ class AS_Events {
             'step_key'   => substr( $step_key, 0, 100 ),
             'session_id' => substr( $session_id, 0, 64 ),
             'page_url'   => substr( $page_url, 0, 500 ),
+            'page_id'    => max( 0, $page_id ),
             'created_at' => current_time( 'mysql' ),
         ] );
     }

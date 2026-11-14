@@ -19,9 +19,28 @@
       fd.append( 'step_key',   sk || '' );
       fd.append( 'session_id', _asSid );
       fd.append( 'page_url',   window.location.origin + window.location.pathname );
-      fetch( asData.ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin' } ).catch( function () {} );
+      fd.append( 'page_id',    asData.pageId || 0 );
+      /* keepalive: a tel: click can hand off to the dialer before the request finishes */
+      fetch( asData.ajaxUrl, { method: 'POST', body: fd, credentials: 'same-origin', keepalive: ev === 'call' } ).catch( function () {} );
     } catch ( e ) {}
   }
+
+  /* ── Call clicks ──
+     One delegated listener for every tel: link on the page (header, footer,
+     buttons added later). Repeat clicks on the same number within 2 s count once. */
+  var _asLastCall = { num: '', t: 0 };
+  document.addEventListener( 'click', function ( e ) {
+    try {
+      var a = e.target && e.target.closest ? e.target.closest( 'a[href^="tel:"]' ) : null;
+      if ( ! a ) return;
+      var num = decodeURIComponent( a.getAttribute( 'href' ).slice( 4 ) ).replace( /[^0-9+*#,]/g, '' );
+      if ( ! num ) return;
+      var now = Date.now();
+      if ( num === _asLastCall.num && now - _asLastCall.t < 2000 ) return;
+      _asLastCall = { num: num, t: now };
+      asTrack( 'call', num );
+    } catch ( err ) {}
+  }, true );
 
   /* Step number → step_key used by the analytics funnel */
   var AS_STEP_KEYS = { 1: 'shipping', 2: 'vehicle', 3: 'contact' };

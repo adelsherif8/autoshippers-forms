@@ -21,19 +21,24 @@ class AS_Form_Handler {
         add_action( 'wp_ajax_nopriv_as_partial',    [ $this, 'handle_partial' ] );
     }
 
-    /* ── Analytics: record a view / start / step / complete milestone ── */
+    /* ── Analytics: record a view / start / step / complete milestone, or a tel: click ── */
     public function handle_track(): void {
         nocache_headers();
         $event_type = sanitize_key( $_POST['event_type'] ?? '' );
         $step_key   = sanitize_text_field( $_POST['step_key']   ?? '' );
         $session_id = sanitize_text_field( $_POST['session_id'] ?? '' );
         $page_url   = esc_url_raw( $_POST['page_url'] ?? '' );
-        $allowed    = [ 'view', 'start', 'step', 'complete' ];
-        if ( ! in_array( $event_type, $allowed, true ) || $session_id === '' ) {
+        $page_id    = absint( $_POST['page_id'] ?? 0 );
+        if ( $event_type === 'call' ) {
+            /* Keep only what a phone number is made of: digits, +, *, #, comma. */
+            $step_key = preg_replace( '/[^0-9+*#,]/', '', $step_key );
+            if ( $step_key === '' ) { wp_send_json_error(); return; }
+        }
+        if ( ! in_array( $event_type, AS_Events::TYPES, true ) || $session_id === '' ) {
             wp_send_json_error();
             return;
         }
-        AS_Events::insert( $event_type, $step_key, $session_id, $page_url );
+        AS_Events::insert( $event_type, $step_key, $session_id, $page_url, $page_id );
         wp_send_json_success();
     }
 
