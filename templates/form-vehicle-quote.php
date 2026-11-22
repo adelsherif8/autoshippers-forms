@@ -6,6 +6,8 @@ $show_hero    = $show_hero    ?? true;
 $show_logo    = $show_logo    ?? true;
 $show_trust   = $show_trust   ?? true;
 $show_contact = $show_contact ?? true;
+/* "Is the vehicle modified?" — off on the live form for now; '' | cards | checkbox | options */
+$modified_style = $modified_style ?? '';
 $cities = [
   'Toronto','Ottawa','Calgary','Vancouver','Edmonton',
   'Saskatoon','Regina','Winnipeg','Thunder Bay',
@@ -199,6 +201,10 @@ $cities = [
           </label>
         </div>
 
+        <?php if ( $modified_style !== '' ): ?>
+        <input type="hidden" name="vehicle_modified_style" value="<?php echo esc_attr( $modified_style ); ?>">
+        <?php endif; ?>
+        <?php if ( $modified_style === 'cards' ): ?>
         <div class="as-divider"></div>
 
         <div class="as-section-label" style="margin-bottom:12px">Is the vehicle modified? <span class="as-required-star">*</span></div>
@@ -224,6 +230,28 @@ $cities = [
             </div>
           </label>
         </div>
+
+        <?php elseif ( $modified_style === 'checkbox' ): ?>
+        <div class="as-divider"></div>
+        <label class="as-check as-check-hint">
+          <input type="checkbox" name="vehicle_modified" value="Yes">
+          <span class="as-check-box"><i class="fa-solid fa-check"></i></span>
+          <span class="as-check-label">My vehicle is modified<small>Lifted, lowered, oversized tires, body kit, etc.</small></span>
+        </label>
+        <?php elseif ( $modified_style === 'options' ): ?>
+        <div class="as-divider"></div>
+        <div class="as-section-label" style="margin-bottom:4px">Any modifications?</div>
+        <div class="as-mods-hint">Tick all that apply. Leave blank if the vehicle is stock.</div>
+        <div class="as-mods-grid">
+          <?php foreach ( [ 'Lifted', 'Lowered', 'Oversized tires / wheels', 'Roof rack / cargo box', 'Body kit / spoiler', 'Other' ] as $mod ): ?>
+          <label class="as-check">
+            <input type="checkbox" name="vehicle_mods[]" value="<?php echo esc_attr( $mod ); ?>">
+            <span class="as-check-box"><i class="fa-solid fa-check"></i></span>
+            <span class="as-check-label"><?php echo esc_html( $mod ); ?></span>
+          </label>
+          <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
 
         <div class="as-actions">
           <button class="as-btn-back" type="button"><i class="fa-solid fa-arrow-left"></i> Back</button>

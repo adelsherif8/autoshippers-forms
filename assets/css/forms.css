@@ -425,6 +425,12 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator {
 .as-check input:checked + .as-check-box i { opacity: 1; }
 .as-check input:focus-visible + .as-check-box { box-shadow: 0 0 0 3px var(--orange-dim); }
 .as-check-label { font-size: 14px; font-weight: 500; color: var(--text); }
+.as-check-label small { display: block; font-size: 12px; font-weight: 400; color: var(--text-muted); margin-top: 2px; }
+.as-check-hint { align-items: flex-start; }
+.as-check-hint .as-check-box { margin-top: 2px; }
+.as-mods-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+.as-mods-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; margin-bottom: 8px; }
+@media (max-width: 520px) { .as-mods-grid { grid-template-columns: 1fr; } }
 
 /* ── Conditional field ────────────────────────────────────── */
 .as-conditional { display: none; }

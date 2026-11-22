@@ -73,7 +73,9 @@ function as_render_vehicle_quote( $atts, array $defaults ): string {
         'logo'    => $defaults['logo'],
         'trust'   => $defaults['trust'],
         'contact' => $defaults['contact'],
+        'modified' => '',   /* cards | checkbox | options — hidden when empty */
     ], (array) $atts );
+    $modified_style = in_array( $atts['modified'], [ 'cards', 'checkbox', 'options' ], true ) ? $atts['modified'] : '';
 
     /* Expose as vars the template can check */
     $show_hero    = filter_var( $atts['hero'],    FILTER_VALIDATE_BOOLEAN );
@@ -121,6 +123,7 @@ function as_enqueue_frontend() {
         'nonce'     => wp_create_nonce( 'as_submit' ),
         'itiUtils'  => $iti . 'js/utils.js',
         'pageId'    => (int) get_queried_object_id(),
+        'preview'   => isset( $_GET['as_preview'] ) ? 1 : 0,   /* preview page: no analytics / unfinished fills */
     ] );
 }
 
@@ -161,3 +164,52 @@ function as_action_links( $links ) {
     $links[] = '<a href="' . admin_url( 'admin.php?page=as-settings' ) . '">Settings</a>';
     return $links;
 }
+
+/* ── Preview page: ?as_preview=modified ─────────────────────────
+   Shows the three "Is the vehicle modified?" versions side by side so the
+   client can pick one. Not linked anywhere, not indexed, no page created. */
+add_action( 'template_redirect', 'as_render_modified_preview' );
+function as_render_modified_preview() {
+    if ( ( $_GET['as_preview'] ?? '' ) !== 'modified' ) return;
+    nocache_headers();
+    $versions = [
+        'cards'    => [ 'Option A — Yes / No (required)', 'Visitor must pick one before getting a quote.' ],
+        'checkbox' => [ 'Option B — one checkbox (optional)', 'Simplest. Unticked = not modified.' ],
+        'options'  => [ 'Option C — what is modified (optional)', 'Tells dispatch exactly what was changed. Nothing ticked = not modified.' ],
+    ];
+    ?><!doctype html>
+<html <?php language_attributes(); ?>>
+<head>
+<meta charset="<?php bloginfo( 'charset' ); ?>">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Vehicle modified — form options</title>
+<?php wp_head(); ?>
+<style>
+body.as-preview{background:#f6f7f9;margin:0;padding:32px 16px 64px;font-family:Inter,system-ui,sans-serif}
+.as-preview-intro{max-width:760px;margin:0 auto 28px;text-align:center}
+.as-preview-intro h1{font-size:26px;margin:0 0 8px;color:#111}
+.as-preview-intro p{color:#555;margin:0}
+.as-preview-block{max-width:760px;margin:0 auto 48px}
+.as-preview-block h2{font-size:19px;margin:0 0 4px;color:#ee7a00}
+.as-preview-block p{margin:0 0 14px;color:#555;font-size:14px}
+</style>
+</head>
+<body class="as-preview">
+<div class="as-preview-intro">
+  <h1>“Is the vehicle modified?” — 3 options</h1>
+  <p>Fill in step 1 and click Continue — the question is on step 2 of each form.</p>
+</div>
+<?php foreach ( $versions as $style => [ $title, $desc ] ) : ?>
+<section class="as-preview-block">
+  <h2><?php echo esc_html( $title ); ?></h2>
+  <p><?php echo esc_html( $desc ); ?></p>
+  <?php echo as_render_vehicle_quote( [ 'modified' => $style ], [ 'hero' => 0, 'logo' => 0, 'trust' => 0, 'contact' => 0 ] ); ?>
+</section>
+<?php endforeach; ?>
+<?php wp_footer(); ?>
+</body>
+</html><?php
+    exit;
+}
+

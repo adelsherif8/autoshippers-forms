@@ -12,6 +12,7 @@
     } catch ( e ) { return Math.random().toString( 36 ).slice( 2 ) + Date.now().toString( 36 ); }
   } )();
   function asTrack( ev, sk ) {
+    if ( window.asData && asData.preview ) return;   /* preview page doesn't count */
     try {
       var fd = new FormData();
       fd.append( 'action',     'as_track' );
@@ -58,6 +59,7 @@
   function asSavePartial( wrap, stepKey, useBeacon ) {
     try {
       if ( wrap.dataset.asDone === '1' ) return;   /* already submitted */
+      if ( asData.preview ) return;
       var fd = new FormData();
       fd.append( 'action',     'as_partial' );
       fd.append( 'session_id', _asSid );
@@ -360,7 +362,8 @@
         this.wrap.querySelectorAll( 'input, select, textarea' ).forEach( el => {
           if ( ! el.name ) return;
           if ( el.type === 'radio' || el.type === 'checkbox' ) {
-            if ( el.checked ) data.set( el.name, el.value );
+            /* name[] groups (e.g. vehicle_mods[]) keep every ticked value */
+            if ( el.checked ) el.name.slice( -2 ) === '[]' ? data.append( el.name, el.value ) : data.set( el.name, el.value );
           } else if ( el.name === 'phone' ) {
             data.set( 'phone', this._e164( el.value ) );
           } else {

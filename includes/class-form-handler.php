@@ -327,7 +327,7 @@ class AS_Form_Handler {
             $referral = 'Other — ' . $p['referral_other'];
         }
         $is_dealer = $p['is_dealer'] !== '' ? 'Yes' : 'No';
-        $modified  = in_array( $p['vehicle_modified'], [ 'Yes', 'No' ], true ) ? $p['vehicle_modified'] : '';
+        $modified  = $this->modified_answer( $p['vehicle_modified_style'], $p['vehicle_modified'] );
 
         /* Build custom fields. UTMs come from the canonical scad_tracking_params
            keys (utmcampaign_custom, utmmedium_custom, …). We still write to the
@@ -490,10 +490,28 @@ class AS_Form_Handler {
     }
 
     /* ── Helpers ── */
+
+    /* "Is the vehicle modified?" comes in three shapes (see the template).
+       Every shape ends up as one GHL text value: "Yes", "No", or
+       "Yes — Lifted, Oversized tires / wheels". Hidden form → '' (not sent). */
+    private function modified_answer( string $style, string $single ): string {
+        if ( $style === 'cards' ) {
+            return in_array( $single, [ 'Yes', 'No' ], true ) ? $single : '';
+        }
+        if ( $style === 'checkbox' ) {
+            return $single === 'Yes' ? 'Yes' : 'No';
+        }
+        if ( $style === 'options' ) {
+            $allowed = [ 'Lifted', 'Lowered', 'Oversized tires / wheels', 'Roof rack / cargo box', 'Body kit / spoiler', 'Other' ];
+            $picked  = array_values( array_intersect( $allowed, array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['vehicle_mods'] ?? [] ) ) ) );
+            return $picked ? 'Yes — ' . implode( ', ', $picked ) : 'No';
+        }
+        return '';
+    }
     private function sanitize_post(): array {
         $keys = [
             'move_type', 'pickup_date', 'from_city', 'from_other',
-            'to_city', 'to_other', 'vehicle_type', 'vehicle_status', 'vehicle_modified',
+            'to_city', 'to_other', 'vehicle_type', 'vehicle_status', 'vehicle_modified', 'vehicle_modified_style',
             'vehicle_year', 'vehicle_make', 'vehicle_model',
             'referral_source', 'referral_other', 'is_dealer', 'company_name',
             'first_name', 'last_name', 'email', 'phone',
