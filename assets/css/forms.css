@@ -473,6 +473,12 @@ input[type="date"].as-input::-webkit-calendar-picker-indicator {
 .as-status-nonrunner input:checked + .as-status-card .as-status-info strong { color: var(--red); }
 .as-status-nonrunner input:checked + .as-status-card .as-status-icon { background: rgba(220,38,38,0.15); border-color: var(--red); }
 
+/* "Is the vehicle modified?" — neither answer is good or bad, so brand orange, not green/red */
+.as-status-mod .as-status-icon { background: var(--orange-dim); border: 1px solid var(--orange-border); color: var(--orange); }
+.as-status-mod input:checked + .as-status-card { border-color: var(--orange); background: var(--orange-dim); box-shadow: 0 0 0 1px var(--orange); }
+.as-status-mod input:checked + .as-status-card .as-status-info strong { color: var(--orange); }
+.as-status-mod input:checked + .as-status-card .as-status-icon { background: rgba(238,122,0,0.15); border-color: var(--orange); }
+
 /* ── Divider ──────────────────────────────────────────────── */
 .as-divider { height: 1px; background: var(--border); margin: 20px 0; }
 

@@ -327,6 +327,7 @@ class AS_Form_Handler {
             $referral = 'Other — ' . $p['referral_other'];
         }
         $is_dealer = $p['is_dealer'] !== '' ? 'Yes' : 'No';
+        $modified  = in_array( $p['vehicle_modified'], [ 'Yes', 'No' ], true ) ? $p['vehicle_modified'] : '';
 
         /* Build custom fields. UTMs come from the canonical scad_tracking_params
            keys (utmcampaign_custom, utmmedium_custom, …). We still write to the
@@ -339,6 +340,7 @@ class AS_Form_Handler {
             'as_cf_to_city'           => $to,
             'as_cf_vehicle_type'      => $p['vehicle_type'],
             'as_cf_vehicle_status'    => $p['vehicle_status'],
+            'as_cf_vehicle_modified'  => $modified,
             'as_cf_vehicle_year'      => $p['vehicle_year'],
             'as_cf_vehicle_make'      => $p['vehicle_make'],
             'as_cf_vehicle_model'     => $p['vehicle_model'],
@@ -384,6 +386,7 @@ class AS_Form_Handler {
             'to_city'        => $to,
             'vehicle_type'   => $p['vehicle_type'],
             'vehicle_status' => $p['vehicle_status'],
+            'vehicle_modified' => $modified,
             'vehicle_year'   => $p['vehicle_year'],
             'vehicle_make'   => $p['vehicle_make'],
             'vehicle_model'  => $p['vehicle_model'],
@@ -490,7 +493,7 @@ class AS_Form_Handler {
     private function sanitize_post(): array {
         $keys = [
             'move_type', 'pickup_date', 'from_city', 'from_other',
-            'to_city', 'to_other', 'vehicle_type', 'vehicle_status',
+            'to_city', 'to_other', 'vehicle_type', 'vehicle_status', 'vehicle_modified',
             'vehicle_year', 'vehicle_make', 'vehicle_model',
             'referral_source', 'referral_other', 'is_dealer', 'company_name',
             'first_name', 'last_name', 'email', 'phone',

@@ -199,6 +199,32 @@ $cities = [
           </label>
         </div>
 
+        <div class="as-divider"></div>
+
+        <div class="as-section-label" style="margin-bottom:12px">Is the vehicle modified? <span class="as-required-star">*</span></div>
+        <div class="as-status-row">
+          <label class="as-status-choice as-status-mod">
+            <input type="radio" name="vehicle_modified" value="Yes">
+            <div class="as-status-card">
+              <div class="as-status-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+              <div class="as-status-info">
+                <strong>Yes, modified</strong>
+                <span>Lifted, lowered, oversized tires, body kit</span>
+              </div>
+            </div>
+          </label>
+          <label class="as-status-choice as-status-mod">
+            <input type="radio" name="vehicle_modified" value="No">
+            <div class="as-status-card">
+              <div class="as-status-icon"><i class="fa-solid fa-car"></i></div>
+              <div class="as-status-info">
+                <strong>No, stock</strong>
+                <span>Factory height, wheels and body</span>
+              </div>
+            </div>
+          </label>
+        </div>
+
         <div class="as-actions">
           <button class="as-btn-back" type="button"><i class="fa-solid fa-arrow-left"></i> Back</button>
           <button class="as-btn-next" type="button">Get My Quote <i class="fa-solid fa-arrow-right"></i></button>

@@ -51,7 +51,7 @@
      Saves on blur and on leaving the page, not on every keystroke. */
   var AS_PARTIAL_KEYS = [
     'move_type', 'pickup_date', 'from_city', 'from_other', 'to_city', 'to_other',
-    'vehicle_year', 'vehicle_make', 'vehicle_model', 'vehicle_type', 'vehicle_status',
+    'vehicle_year', 'vehicle_make', 'vehicle_model', 'vehicle_type', 'vehicle_status', 'vehicle_modified',
     'referral_source', 'referral_other', 'is_dealer', 'company_name',
     'first_name', 'last_name', 'email', 'phone'
   ];

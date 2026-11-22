@@ -38,6 +38,7 @@ function as_partial_labels(): array {
         'vehicle_model'   => 'Model',
         'vehicle_type'    => 'Vehicle type',
         'vehicle_status'  => 'Status',
+        'vehicle_modified' => 'Modified',
         'referral_source' => 'Found us via',
         'referral_other'  => 'Found us (typed)',
         'is_dealer'       => 'Dealer',
